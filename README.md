@@ -1,2 +1,2 @@
-# tensorEstimator
-generalized tensorial correlation function estimator
+# vectorizedEstimator
+vectorized two-point correlation function estimator
