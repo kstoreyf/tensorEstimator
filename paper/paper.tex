@@ -9,7 +9,7 @@
 %\revised{not yet}
 %\accepted{not yet}
 %\submitjournal{ApJ}
-\shorttitle{tensor estimator for large-scale structure}
+\shorttitle{vectorized estimator for large-scale structure}
 \shortauthors{storey-fisher and hogg}
 
 % typography
@@ -55,7 +55,7 @@ The two-point correlation function (2PCF) is one of the most commonly used stati
 % Aims
 We present a new, vectorized estimator for the 2PCF that resolves these issues. 
 % Methods
-It projects pairs of objects onto any set of continuous basis functions, eliminating the need for binning. These functions can also depend on galaxy properties, so the estimator effectively computes a regression against these properties. This produces a vector that encodes the clustering information, and the 2PCF can be quickly evaluated at any value of the given property, giving a precise, unbiased characterization of the evolution.
+It generalizes the Landy-Szalay estimator to depend on a tensor of random catalog pairs. The estimator then projects pairs onto any set of continuous basis functions, eliminating the need for binning. These functions can also depend on galaxy properties, so the estimator effectively computes a regression against these properties. This produces a vector that encodes the clustering information, and the 2PCF can be quickly evaluated at any value of the given property, giving a precise, unbiased, and smooth characterization of the evolution.
 % Results
 We apply this estimator to the main galaxy sample of the Sloan Digital Sky Survey and demonstrate that it precisely characterizes the luminosity evolution of clustering. We also use the estimator to directly fit for the baryon acoustic feature and show that it extracts Fisher-optimal statistics. These results indicate that this new method provides the accuracy and precision needed to analyze upcoming galaxy surveys.
 
