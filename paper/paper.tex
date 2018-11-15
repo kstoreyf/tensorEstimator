@@ -1,0 +1,127 @@
+% This project is part of the Tensor Estimator project
+% Copyright 2018 the authors.
+
+\documentclass[modern]{aastex62}
+
+% aastex parameters
+%%\hypersetup{linkcolor=red,citecolor=green,filecolor=cyan,urlcolor=magenta}
+\received{not yet but hopefully soon!!}
+%\revised{not yet}
+%\accepted{not yet}
+%\submitjournal{ApJ}
+\shorttitle{tensor estimator for large-scale structure}
+\shortauthors{storey-fisher and hogg}
+
+% typography
+
+% affiliations
+\newcommand{\ccpp}{\affiliation{%
+    Center for Cosmology and Particle Physics,
+    Department of Physics,
+    New York University}}
+\newcommand{\flatiron}{\affiliation{%
+    Flatiron Institute, Simons Foundation}}
+\newcommand{\cds}{\affiliation{%
+    Center for Data Science,
+    New York University}}
+\newcommand{\mpia}{\affiliation{%
+    Max-Planck-Institut f\"{u}r Astronomie, Heidelberg}}
+
+\begin{document}\sloppy\sloppypar\raggedbottom\frenchspacing
+
+\title{A Vectorized Correlation Function Estimator For Large-Scale Structure}
+%\title{A Generalized Correlation Function Estimator for Galaxy Surveys}
+
+%Tensorial estimator?
+%Generalized estimator?
+%Tensorial estimator? 
+%Projected estimator?
+%Continuous estimator?
+%Vecstimator?
+
+
+\author{Kate Storey-Fisher}
+\ccpp
+
+\author[0000-0003-2866-9403]{David W. Hogg}
+\ccpp
+\flatiron
+\cds
+\mpia
+
+\begin{abstract}\noindent
+% Context
+The two-point correlation function (2PCF) is one of the most commonly used statistics to characterize clustering in galaxy surveys. However, current estimators of the 2PCF have significant limitations. The standard Landy-Szalay estimator evaluates the 2PCF in bins of radial separation between objects, and the choice of bins introduces a trade-off between bias and variance. Further trade-offs are required to determine the dependence of clustering on galaxy properties, typically by subsampling the objects. A marked correlation function, which weights the 2PCF based on some property, avoids some of these issues but still requires binning and contains a bias with sample selection.
+% Aims
+We present a new, vectorized estimator for the 2PCF that resolves these issues. 
+% Methods
+It projects pairs of objects onto any set of continuous basis functions, eliminating the need for binning. These functions can also depend on galaxy properties, so the estimator effectively computes a regression against these properties. This produces a vector that encodes the clustering information, and the 2PCF can be quickly evaluated at any value of the given property, giving a precise, unbiased characterization of the evolution.
+% Results
+We apply this estimator to the main galaxy sample of the Sloan Digital Sky Survey and demonstrate that it precisely characterizes the luminosity evolution of clustering. We also use the estimator to directly fit for the baryon acoustic feature and show that it extracts Fisher-optimal statistics. These results indicate that this new method provides the accuracy and precision needed to analyze upcoming galaxy surveys.
+
+\end{abstract}
+
+
+
+\section{Introduction}
+
+Large-scale structure (LSS) is well-described by $\Lambda$CDM. 
+
+LSS is also used to constrain galaxy formation.
+
+The Landy-Szalay estimator is traditionally used to characterize clustering in the LSS.
+
+The marked correlation function has been used to understand the clustering dependence on galaxy properties.
+
+The 2PCF is closely related to the power spectrum, but these are computed separately. 
+
+This is a probabilistic/frequentist approach.
+
+\section{Generalities}
+
+The Landy-Szalay estimator is justified by\ldots
+
+Estimating clustering is closely related to least-squares fitting.
+
+From these, we can infer the form of the estimator.
+
+\section{Methods}
+
+We derive/define this new estimator.
+
+We show that it reduces to the Landy-Szalay estimator.
+
+We prove that the estimator is invariant under affine transformations.
+
+These show that the estimator is correct.
+
+We implement this estimator using \ldots
+
+\section{Tests and Results}
+
+To test this estimator, we generate a Gaussian random field with a known power spectrum (and thus known correlation function). We sample the field to obtain a set of tracer objects.
+
+We apply the estimator to the SDSS main galaxy sample. \ldots We reproduce the results of Zehavi et al, showing that the clustering shows a strong dependence on luminosity. \ldots We find that we can more precisely track this luminosity evolution.
+
+We use this estimator to linearize around the BAO feature, using an LRG dataset. Show Fisher-optimal! (Different Fisher.)
+
+\section{Discussion}
+
+Covariance matrix
+
+We estimated the 2PCF with fewer components to achieve the same level of detail.
+
+In the future, we could simultaneously estimate the correlation function and the power spectrum.
+
+We could also investigate: gradients, anomalies, growth of structure, directly estimating the cosmological parameters, calibrating for systematics
+
+We have reformulated the correlation function in terms of pairs of objects.
+
+Our performance is by definition the same as traditional estimators due to the limiting factor of pair-finding.
+
+Use our estimator it is the best!
+
+\acknowledgements
+It is a pleasure to thank\ldots
+
+\end{document}

@@ -1,0 +1,9 @@
+*.aux
+*.log
+*.blg
+*.bbl
+*~
+*.fdb_latexmk
+*.fls
+paper.pdf
+*Notes.bib
