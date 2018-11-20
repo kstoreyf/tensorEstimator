@@ -1,6 +1,15 @@
 % This project is part of the Tensor Estimator project
 % Copyright 2018 the authors.
 
+% to-do
+% -----
+% - get yourself an ORCID and use it.
+% - Is ``vectorized'' the right word? It's what I say, but now I'm doubting it. We could go with linear-regression. Or affine-invariant. Or unbinned. Or continuous-function?
+
+% style notes
+% -----------
+% - line break at sentence breaks? Or more frequently? So git diff works good?
+
 \documentclass[modern]{aastex62}
 
 % aastex parameters
@@ -9,7 +18,7 @@
 %\revised{not yet}
 %\accepted{not yet}
 %\submitjournal{ApJ}
-\shorttitle{vectorized estimator for large-scale structure}
+\shorttitle{vectorized correlation function estimator}
 \shortauthors{storey-fisher and hogg}
 
 % typography
@@ -45,20 +54,27 @@
 
 \author[0000-0003-2866-9403]{David W. Hogg}
 \ccpp
-\flatiron
 \cds
 \mpia
+\flatiron
 
 \begin{abstract}\noindent
 % Context
-The two-point correlation function (2PCF) is one of the most commonly used statistics to characterize clustering in galaxy surveys. However, current estimators of the 2PCF have significant limitations. The standard Landy-Szalay estimator evaluates the 2PCF in bins of radial separation between objects, and the choice of bins introduces a trade-off between bias and variance. Further trade-offs are required to determine the dependence of clustering on galaxy properties, typically by subsampling the objects. A marked correlation function, which weights the 2PCF based on some property, avoids some of these issues but still requires binning and contains a bias with sample selection.
+The two-point correlation function (2PCF) the most important statistic in structure formation.
+However, current estimators of the 2PCF have significant limitations.
+The standard Landy-Szalay (LS) estimator evaluates the 2PCF in bins of radial separation between objects, and the choice of bins introduces a trade-off between bias and variance.
+Further trade-offs are required to determine the dependence of clustering on galaxy properties or redshift, typically by subsampling the objects.
 % Aims
-We present a new, vectorized estimator for the 2PCF that resolves these issues. 
+We present a new, vectorized estimator (Foo) for the 2PCF that obviates binning in separation or anything else.
+Instead of estimating the 2PCF in bins, it estimates the parameters of a continuous-function representation of the 2PCF in the form of a linear superposition of basis functions.
 % Methods
-It generalizes the Landy-Szalay estimator to depend on a tensor of random catalog pairs. The estimator then projects pairs onto any set of continuous basis functions, eliminating the need for binning. These functions can also depend on galaxy properties, so the estimator effectively computes a regression against these properties. This produces a vector that encodes the clustering information, and the 2PCF can be quickly evaluated at any value of the given property, giving a precise, unbiased, and smooth characterization of the evolution.
+Inspired by linear least-squares fitting, the Foo estimator marks the numerator terms of LS with vectors of basis functions of pair properties, and the denominator with a tensor of outer products of those functions.
+The function estimates the best-fit linear combination of basis functions to describe the 2PCF, in the limit that LS would be applicable.
 % Results
-We apply this estimator to the main galaxy sample of the Sloan Digital Sky Survey and demonstrate that it precisely characterizes the luminosity evolution of clustering. We also use the estimator to directly fit for the baryon acoustic feature and show that it extracts Fisher-optimal statistics. These results indicate that this new method provides the accuracy and precision needed to analyze upcoming galaxy surveys.
-
+We apply Foo to artificial data to demonstrate that it can determine the clustering in a representation that provides more accuracy with fewer basis functions than LS, thus reducing requirements on mocks for covariance estimation.
+We apply Foo to the Main Sample of the Sloan Digital Sky Survey (SDSS) to show that Foo can measure the luminosity-dependence of clustering without binning samples in luminosity.
+We apply Foo to the Luminous Red Galaxy Sample of SDSS-III (DO WE?) to show that Foo can extract a small set of Fisher-optimal statistics for measuring the location of the Baryon Acoustic Feature.
+We discuss other applications and limitations of Foo for present and future studies of large-scale structure; in principle it can be used to unify real-space and Fourier-space approaches.
 \end{abstract}
 
 
