@@ -60,26 +60,27 @@
 
 \begin{abstract}\noindent
 % Context
-The two-point correlation function (2PCF) the most important statistic in structure formation.
+The two-point correlation function (2PCF) is the most important statistic in structure formation.
 However, current estimators of the 2PCF have significant limitations.
 The standard Landy-Szalay (LS) estimator evaluates the 2PCF in bins of radial separation between objects, and the choice of bins introduces a trade-off between bias and variance.
-Further trade-offs are required to determine the dependence of clustering on galaxy properties or redshift, typically by subsampling the objects.
+Further binning trade-offs are required to determine the dependence of clustering on galaxy properties or redshift.
 % Aims
 We present a new, vectorized estimator (Foo) for the 2PCF that obviates binning in separation or anything else.
 Instead of estimating the 2PCF in bins, it estimates the parameters of a continuous-function representation of the 2PCF in the form of a linear superposition of basis functions.
 % Methods
 Inspired by linear least-squares fitting, the Foo estimator marks the numerator terms of LS with vectors of basis functions of pair properties, and the denominator with a tensor of outer products of those functions.
-The function estimates the best-fit linear combination of basis functions to describe the 2PCF, in the limit that LS would be applicable.
+The function estimates the best-fit linear combination of basis functions to describe the 2PCF, in the same limit in which LS is justifiably optimal for binned applications.
 % Results
 We apply Foo to artificial data to demonstrate that it can determine the clustering in a representation that provides more accuracy with fewer basis functions than LS, thus reducing requirements on mocks for covariance estimation.
 We apply Foo to the Main Sample of the Sloan Digital Sky Survey (SDSS) to show that Foo can measure the luminosity-dependence of clustering without binning samples in luminosity.
 We apply Foo to the Luminous Red Galaxy Sample of SDSS-III (DO WE?) to show that Foo can extract a small set of Fisher-optimal statistics for measuring the location of the Baryon Acoustic Feature.
-We discuss other applications and limitations of Foo for present and future studies of large-scale structure; in principle it can be used to unify real-space and Fourier-space approaches.
+We discuss other applications and limitations of Foo for present and future studies of large-scale structure; in principle it can be used to unify real-space and Fourier-space approaches because it can be used to estimate parameters for any wavelet or Fourier basis.
 \end{abstract}
 
 
-
 \section{Introduction}
+
+Binning is sinning!
 
 Large-scale structure (LSS) is well-described by $\Lambda$CDM. 
 
