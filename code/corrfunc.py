@@ -16,13 +16,9 @@ def counts(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins, pimax,
     ndata = len(ra_data)
     nrand = len(ra_rand)
     pibins = np.arange(0, pimax + pibinwidth, pibinwidth)
-    print z_data
-
 
     if comoving:
         zdf = pd.DataFrame(z_data)
-        print zdf
-        print  zdf.apply(get_comoving_dist)
         z_data = zdf.apply(get_comoving_dist)[0].values
         rzdf = pd.DataFrame(z_rand)
         z_rand = rzdf.apply(get_comoving_dist)[0].values
