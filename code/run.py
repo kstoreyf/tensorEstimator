@@ -17,6 +17,7 @@ def main():
     #nd = 10
     #nd = 31
     nd = 102
+    #nd = 307
     #nd = 3158
     #nd = 10015
     data1fn = '../../lss/mangler/samples/a0.6452_0001.v5_ngc_ifield_ndata{}.rdzw'.format(nd)
@@ -26,50 +27,58 @@ def main():
 
     print 'Running for n_data={}'.format(nd)
 
-    K = 4
+    K = 8
     #Separations should be given in Mpc/h
-    pimax = 1000 #Mpc/h
-    rpmin = 0.1
+    pimax = 40 #Mpc/h
+    rpmin = 0.5
     rpmax = 10. #Mpc/h
     bin_sep = np.log(rpmax / rpmin) / float(K)
+    #bin_sep = np.log10(rpmax / rpmin) / float(K)
 
     rps = []
     wprps = []
     labels = []
 
-    basisfunc = [estimator.tophat]
-    labels = ['tophat_orig']
+    basisfunc = [estimator.tophat, estimator.gaussian]
+    labels = ['tophat', 'gaussian']
     #basisfunc = [estimator.tophat, estimator.piecewise, estimator.gaussian, estimator.trig]
     #labels = ['tophat', 'piecewise', 'gaussian', 'trig']
 
 
-    #rpbins = np.logspace(np.log10(rpmin), np.log10(rpmax), K+1)
-    rpbins = np.logspace(np.log(rpmin), np.log(rpmax), K+1, base=np.e)
+    rpbins = np.logspace(np.log10(rpmin), np.log10(rpmax), K+1)
+    #rpbins = np.logspace(np.log(rpmin), np.log(rpmax), K+1, base=np.e)
 
     rpbins_avg = 0.5 * (rpbins[1:] + rpbins[:-1])
     logrpbins_avg = np.log10(rpbins_avg)
+    #logrpbins_avg = np.log(rpbins_avg)
 
     logwidth = np.log10(rpbins_avg[1]) - np.log10(rpbins_avg[0])
     wp = True #vs 3d
 
     cosmo = LambdaCDM(H0=70, Om0=0.3, Ode0=0.7)
 
-
+    data1, rand1 = load_data(data1fn, rand1fn)
+    data2 = data1
+    rand2 = rand1
 
     start = time.time()
-    rps, wprps = run(data1fn, rand1fn, data2fn, rand2fn, pimax, rpmin, rpmax, bin_sep,
-                           basisfunc, K, cosmo, wp, rpbins, logrpbins_avg, logwidth)
+    rps, wprps = run(data1, rand1, data2, rand2, pimax, rpmin, rpmax,
+                bin_sep, basisfunc, K, cosmo, wp, rpbins, logrpbins_avg, logwidth)
 
     end = time.time()
-    #print 'Time: {:3f} s'.format(end-start)
+    print 'Time run: {:3f} s'.format(end-start)
 
     labels += ['tophat_orig']
-    labels += ['treecorr']
+    #labels += ['treecorr']
 
-    # est_corrfunc, wprp_corrfunc = run_corrfunc(data1fn, rand1fn, data2fn, rand2fn, rpbins, pimax)
-    # rps.append(rpbins_avg)
-    # wprps.append(wprp_corrfunc)
-    # labels.append('corrfunc')
+    start = time.time()
+    est_corrfunc, wprp_corrfunc = run_corrfunc(data1, rand1, data2, rand2,
+                                               rpbins, pimax, nopi=True)
+    end = time.time()
+    print 'Time corrfunc: {:3f} s'.format(end-start)
+    rps.append(rpbins_avg)
+    wprps.append(wprp_corrfunc)
+    labels.append('corrfunc')
     #
     #
     # data1 = pd.read_csv(data1fn)
@@ -87,49 +96,58 @@ def main():
     print labels
     plotter.plot_wprp(rps, wprps, labels, wp_tocompare='tophat_orig')
 
-
-def run(data1fn, rand1fn, data2fn, rand2fn, pimax, rmin, rmax, bin_sep, basisfunc, K, cosmo, wp, rpbins, *args):
+def load_data(datafn, randfn):
     print 'Loading data'
-    data1 = pd.read_csv(data1fn)
-    rand1 = pd.read_csv(rand1fn)
-    data2 = pd.read_csv(data2fn)
-    rand2 = pd.read_csv(rand2fn)
+    data = pd.read_csv(datafn)
+    rand = pd.read_csv(randfn)
+    print 'Adding info to dataframes'
+    data = add_info(data, zfile=None)
+    rand = add_info(rand, zfile=None)
+    return data, rand
+
+def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfunc, K, cosmo, wp, rpbins, *args):
 
     # should make so can take list
-    print 'Adding info to dataframes'
-    data1 = add_info(data1, zfile=None)
-    rand1 = add_info(rand1, zfile=None)
-    data2 = add_info(data2, zfile=None)
-    rand2 = add_info(rand2, zfile=None)
 
+    # start = time.time()
+    # d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs = pairs.pairs(data1, rand1, data2, rand2,
+    #                                                          rmax, cosmo, wp)
+    # end = time.time()
+    # print "Time pairs:", end-start
+    #
+    # print d1d2pairs
+    # print len(d1d2pairs)
+    #
+    # #Eliminate self-pairs with zero separation
+    # d1d2pairs = [p for p in d1d2pairs if p[2]>0]
+    # d1r2pairs = [p for p in d1r2pairs if p[2]>0]
+    # d2r1pairs = [p for p in d2r1pairs if p[2]>0]
+    # r1r2pairs = [p for p in r1r2pairs if p[2]>0]
+    #
+    # print d1d2pairs
+    # print len(d1d2pairs)
     # if wp, rmax means rpmax
     # TODO: now mine returns all up to max and treecorr's returns above rmin too - make consistent!
     # TODO: and don't forget self-corrs
+    #what would happen if I didn't include symmetric pairs for dd, rr?
+    #have to do with 2 in dr maybe?
+    #ooh poss bc wouldn't do if had 2 diff data catalogs...
     start = time.time()
-    xi, d1d2pairs_tc, d1r2pairs_tc, d2r1pairs_tc, r1r2pairs_tc = pairs_treecorr(data1, rand1, data2, rand2,
+    xi, d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs = pairs_treecorr(data1, rand1, data2, rand2,
                                                                 rmin, rmax, bin_sep, pimax, wp)
     end = time.time()
     print "Time treecorr pairs:", end-start
-
-    start = time.time()
-    d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs = pairs.pairs(data1, rand1, data2, rand2,
-                                                             rmax, cosmo, wp)
-    end = time.time()
-    print "Time pairs:", end-start
-
+    print len(d1d2pairs)
+    # # d1d2pairs = np.array(list(d1d2pairs)+list(d1d2pairs))
+    # # d1r2pairs = np.array(list(d1r2pairs)+list(d1r2pairs))
+    # # d2r1pairs = np.array(list(d2r1pairs)+list(d2r1pairs))
+    # # r1r2pairs = np.array(list(r1r2pairs)+list(r1r2pairs))
     # print 'pair comp'
     # print d1d2pairs
-    # print d1d2pairs_tc
     # print len(d1d2pairs)
-    # print len(d1d2pairs_tc)
 
     #TODO next: decide whether want to include self-corrs (1, 1) and double count pairs /
     #TODO aka (1,2) and (2,1), and calculate xi in the right corresponding way
-    #TODO but in mine not perfectly semetric, 0,1 there but not 1,0
-
-    #TODO figure out why slightly diff pairs
-    #TODO figure out why r-separations different for same pairs in my vs treecorr
-
 
     #print stopit
 
@@ -149,8 +167,8 @@ def run(data1fn, rand1fn, data2fn, rand2fn, pimax, rmin, rmax, bin_sep, basisfun
     rps += rps_orig
     wprps += wprps_orig
 
-    rps += rps_orig
-    wprps.append(xi)
+    # rps += rps_orig
+    # wprps.append(xi*2)
     #test treecorr
 
     return rps, wprps
@@ -188,32 +206,25 @@ def calc_wprp_orig(a, basisfunc, K, rpbins, *args):
     return rps, wprps
 
 
-def run_corrfunc(data1fn, rand1fn, data2fn, rand2fn, rpbins, pimax):
-    print 'Loading data'
-    data1 = pd.read_csv(data1fn)
-    rand1 = pd.read_csv(rand1fn)
-    data2 = pd.read_csv(data2fn)
-    rand2 = pd.read_csv(rand2fn)
-
+def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, nopi=False):
+    print 'Running corrfunc'
     #can only do autocorrelations right now
     dd, dr, rr = corrfunc.counts(data1['ra'].values, data1['dec'].values, data1['z'].values,
                     rand1['ra'].values, rand1['dec'].values, rand1['z'].values,
                     rpbins, pimax, comoving=True)
 
-    dd = np.sum(dd, axis=0)
-    dr = np.sum(dr, axis=0)
-    rr = np.sum(rr, axis=0)
+    # dd = np.sum(dd, axis=0)
+    # dr = np.sum(dr, axis=0)
+    # rr = np.sum(rr, axis=0)
 
-    print 'corrfunc'
-    print dd
-    print dr
-    print rr
-    est_ls, wprp = corrfunc.calc_wprp_nopi(dd, dr, rr, len(data1), len(rand1))
-    nd = float(len(data1['ra'].values))
-    nr = float(len(rand1['ra'].values))
-    wprp = (dd*(nr/nd)*(nr/nd) - 2*dr*(nr/nd) + rr)/rr
-    print wprp
-    print
+    if nopi:
+        est_ls, wprp = corrfunc.calc_wprp_nopi(dd, dr, rr, len(data1), len(rand1))
+    else:
+        est_ls, wprp = corrfunc.calc_wprp(dd, dr, rr, len(data1), len(rand1))
+    # nd = float(len(data1['ra'].values))
+    # nr = float(len(rand1['ra'].values))
+    # wprp = (dd*(nr/nd)*(nr/nd) - 2*dr*(nr/nd) + rr)/rr
+
     return est_ls, wprp
 
 
@@ -281,14 +292,67 @@ def run_treecorr(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, 
     return xi, dd, dr, rd, rr
 
 
+def run_treecorr_orig(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp):
+
+    #TODO: make work for 2 data and 2 rand catalogs
+
+    ra = data1['ra'].values
+    dec = data1['dec'].values
+    dist = data1['z'].apply(get_comoving_dist).values
+
+    ra_rand = rand1['ra'].values
+    dec_rand = rand1['dec'].values
+    dist_rand = rand1['z'].apply(get_comoving_dist).values
+
+    ndata = len(ra)
+    nrand = len(ra_rand)
+
+    cat_data = treecorr.Catalog(ra=ra, dec=dec, r=dist, ra_units='deg', dec_units='deg')
+    cat_rand = treecorr.Catalog(ra=ra_rand, dec=dec_rand, r=dist_rand, ra_units='deg', dec_units='deg')
+
+    if wp:
+        metric = 'Rperp'
+    else:
+        metric = 'Euclidean'
+
+    dd = treecorr.NNCorrelation(min_sep=min_sep, max_sep=max_sep, bin_size=bin_size,
+                                min_rpar=-pimax, max_rpar=pimax,
+                                bin_slop=0)
+    dd.process(cat_data, metric=metric)
+    print 'DD npairs:', dd.npairs
+
+    dr = treecorr.NNCorrelation(min_sep=min_sep, max_sep=max_sep, bin_size=bin_size,
+                                min_rpar=-pimax, max_rpar=pimax,
+                                bin_slop=0)
+    dr.process(cat_data, cat_rand, metric=metric)
+    print 'DR npairs:', dr.npairs
+
+    rd = dr
+
+    rr = treecorr.NNCorrelation(min_sep=min_sep, max_sep=max_sep, bin_size=bin_size,
+                                min_rpar=-pimax, max_rpar=pimax,
+                                bin_slop=0, num_threads=1)
+    rr.process(cat_rand, metric=metric)
+    print 'RR npairs:', rr.npairs
+
+    xi, varxi = dd.calculateXi(rr, dr)
+    print xi
+    return xi, dd, dr, rd, rr
+
+
 def pairs_treecorr(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp):
 
     xi, dd, dr, rd, rr = run_treecorr(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp)
 
-    d1d2pairs = zip(dd.idxpairs1, dd.idxpairs2, dd.dists)
+    #double?
+    d1d2pairs = zip(dd.idxpairs1, dd.idxpairs2, dd.dists) \
+                + zip(dd.idxpairs2, dd.idxpairs1, dd.dists)
     d1r2pairs = zip(dr.idxpairs1, dr.idxpairs2, dr.dists)
+                #+ zip(dr.idxpairs2, dr.idxpairs1, dr.dists)
     d2r1pairs = zip(rd.idxpairs1, rd.idxpairs2, rd.dists)
-    r1r2pairs = zip(rr.idxpairs1, rr.idxpairs2, rr.dists)
+                #+ zip(rd.idxpairs2, rd.idxpairs1, rd.dists)
+    r1r2pairs = zip(rr.idxpairs1, rr.idxpairs2, rr.dists) \
+                + zip(rr.idxpairs2, rr.idxpairs1, rr.dists)
 
     return xi, d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs
 

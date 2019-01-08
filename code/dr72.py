@@ -24,8 +24,8 @@ def run_dr72():
     #Separations should be given in Mpc/h
     pimax = 40. #Mpc/h
     min_sep = 0.1
-    max_sep = 10. #Mpc/h
-    K = 5
+    max_sep = 40. #Mpc/h
+    K = 12
     bin_size = np.log(max_sep / min_sep) / float(K)
 
     wp = True
@@ -35,7 +35,7 @@ def run_dr72():
 
 def run_bins(min_sep, max_sep, bin_size, K, pimax, wp):
     samplenums = [7, 8, 9, 10, 11, 12]
-    #samplenums = [10]
+    #samplenums = [7]
 
     rpbins = np.logspace(np.log(min_sep), np.log(max_sep), K+1, base=np.e)
     rpbins_avg = 0.5 * (rpbins[1:] + rpbins[:-1])
@@ -48,15 +48,13 @@ def run_bins(min_sep, max_sep, bin_size, K, pimax, wp):
             labels.append(labels_mr[samplenum])
         else:
             labels.append(samplenum)
-        xi = run_sample(samplenum, min_sep, max_sep, bin_size, pimax, wp)
+        xi = run_sample(samplenum, min_sep, max_sep, bin_size, rpbins, pimax, wp)
         wprps.append(xi) #*2?
         cols.append(colors[samplenum])
 
-    print rps
-    print wprps
     plotter.plot_wprp(rps, wprps, labels, colors=cols)
 
-def run_sample(samplenum, min_sep, max_sep, bin_size, pimax, wp):
+def run_sample(samplenum, min_sep, max_sep, bin_size, rpbins, pimax, wp):
 
     fn = '../data/lss.dr72bright{}_czcut.dat'.format(samplenum)
     data1 = pd.read_csv(fn)
@@ -67,7 +65,7 @@ def run_sample(samplenum, min_sep, max_sep, bin_size, pimax, wp):
     print 'ndata=', len(data1.index)
     print 'nrand=', len(rand1.index)
 
-    frac = 0.1
+    frac = 0.2
     data1 = data1.sample(frac=frac)
     rand1 = rand1.sample(frac=frac)
 
@@ -78,11 +76,14 @@ def run_sample(samplenum, min_sep, max_sep, bin_size, pimax, wp):
     rand2 = rand1
 
     start = time.time()
-    xi, dd, dr, rd, rr = run.run_treecorr(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp)
+    #xi, dd, dr, rd, rr = run.run_treecorr(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp)
+    #xi, dd, dr, rd, rr = run.run_treecorr_orig(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp)
+    est_ls, wprp = run.run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax)
+
     end = time.time()
     print 'Time for sample {}, ndata={}: {}'.format(
         samplenum, len(data1.index), end-start)
-    return xi
+    return wprp
 
 
 def get_random(samplenum):

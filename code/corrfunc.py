@@ -53,6 +53,13 @@ def calc_wprp_nopi(dd, dr, rr, ndata, nrand):
 
     return est_ls, wprp
 
+def calc_wprp(dd, dr, rr, ndata, nrand):
+
+    est_ls = calc_ls(dd, dr, rr, ndata, nrand)
+    wprp = 2*np.sum(est_ls, axis=0)
+
+    return est_ls, wprp
+
 
 def get_comoving_dist(z):
     comov = cosmo.comoving_distance(z)

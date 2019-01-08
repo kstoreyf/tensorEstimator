@@ -6,6 +6,8 @@ import numpy as np
 def est(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs, data1, rand1, data2, rand2,
         pimax, rmax, cosmo, basisfunc, K, wp, *args):
 
+    # should these be just the number of pairs within bounds not total data and rands???
+    # mm no because they are tied to the catalogs not the pairs
     nd1 = len(data1)
     nr1 = len(rand1)
     nd2 = len(data2)
@@ -14,11 +16,13 @@ def est(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs, data1, rand1, data2, rand2,
     print 'Calculating dd vector'
     dds = project_pairs(d1d2pairs, data1, data2, pimax, rmax,
                                       cosmo, basisfunc, K, wp, False, *args)
+    print dds
     # is d1 r2 right? cross?
     print 'Calculating dr vector'
 
     drs = project_pairs(d1r2pairs, data1, rand2, pimax, rmax,
                                       cosmo, basisfunc, K, wp, False, *args)
+    print drs
 
     print 'Calculating rd vector'
     # should check if need to compute both aka if d1==d2 (drs and rds should be same bc using symmetric defs of dcm)
@@ -28,6 +32,7 @@ def est(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs, data1, rand1, data2, rand2,
 
     rrs, qqs = project_pairs(r1r2pairs, rand1, rand2, pimax, rmax,
                                       cosmo, basisfunc, K, wp, True, *args)
+    print rrs
 
 
     a = []
@@ -37,8 +42,13 @@ def est(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs, data1, rand1, data2, rand2,
         rd = rds[bb] * 1./(nd2*nr1)
         rr = rrs[bb] * 1./(nr1*nr2)
         qq = qqs[bb] * 1./(nr1*nr2)
-
+        print 'trythis'
+        print dd
+        print dr
+        print rr
+        print (dd-2*dr+rr)/rr
         a.append(calc_amplitudes(dd, dr, rd, rr, qq))
+        print a
     print 'Computed amplitudes'
 
     return a
@@ -69,7 +79,7 @@ def project_pairs(pairs, cat1, cat2, pimax, rmax, cosmo, basisfunc, K, wp, tenso
 
         if wp:
             # pi = h * abs(dcm1[i] - dcm2[j])
-            pi = get_pi(dcm1, dcm2, i, j, h)
+            pi = get_pi(dcm1, dcm2, int(i), int(j), h)
             #TODO: implement binning in pi
             if pi>pimax:
                 continue
@@ -144,6 +154,12 @@ def tophat(cat1, cat2, i, j, rp, logbins_avg, logwidth):
     #     peak = logbins_avg[i]
     #     u[i] = top(logrp, peak, logwidth)
     u = np.array([top(logrp, peak, logwidth) for peak in logbins_avg])
+    return u
+
+def top_quad(cat1, cat2, i, j, rp, logbins_avg, logwidth, val):
+    logrp = np.log10(rp)
+    u = np.array([top(logrp, peak, logwidth) for peak in logbins_avg])
+    u = np.concatenate((u, u*val, u*val**2))
     return u
 
 def piecewise(cat1, cat2, i, j, rp, logbins_avg, logwidth):

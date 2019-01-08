@@ -9,11 +9,10 @@ import estimator
 import pairs
 
 #globals
-ndata = [10, 31, 102, 307, 1012, 3158, 10015]
-#ndata = [10, 31, 102]
+#ndata = [10, 31, 102, 307, 1012, 3158, 10015]
+ndata = [10, 31, 102, 307, 1012]
 #ndata = [10, 31]
-colors = ['blue', 'red', 'green']
-
+colors = ['blue', 'orange', 'black', 'green']
 def main():
     time_pairs()
 
@@ -53,16 +52,25 @@ def time_pairs():
 
     max_only = True
 
+    times_tcp = np.zeros(len(ndata))
     times_tc = np.zeros(len(ndata))
     times_kd = np.zeros(len(ndata))
+    times_cf = np.zeros(len(ndata))
+    times_est = np.zeros(len(ndata))
+    times_tot = np.zeros(len(ndata))
 
     K = 10
     pimax = 40. #Mpc/h
     rmin = 0.1
     rmax = 10. #Mpc/h
-    basisfunc = estimator.tophat
+    basisfunc = [estimator.tophat]
     bin_sep = np.log(rmax / rmin) / float(K)
-    rpbins = np.logspace(np.log(rmin), np.log(rmax), K+1, base=np.e)
+
+    rpbins = np.logspace(np.log10(rmin), np.log10(rmax), K+1)
+    rpbins_avg = 0.5 * (rpbins[1:] + rpbins[:-1])
+    logrpbins_avg = np.log10(rpbins_avg)
+    logwidth = np.log10(rpbins_avg[1]) - np.log10(rpbins_avg[0])
+
     cosmo = LambdaCDM(H0=70, Om0=0.3, Ode0=0.7)
     wp = True
 
@@ -87,12 +95,19 @@ def time_pairs():
         data2 = run.add_info(data2, zfile=None)
         rand2 = run.add_info(rand2, zfile=None)
 
-        start1 = time.time()
-        xi, d1d2pairs_tc, d1r2pairs_tc, d2r1pairs_tc, r1r2pairs_tc = run.pairs_treecorr(data1, rand1, data2, rand2,
-                                                                                    rmin, rmax, bin_sep, pimax, wp)
-        end1 = time.time()
-        print "Time treecorr pairs:", end1 - start1
-        times_tc[i] = end1 - start1
+        start0 = time.time()
+        # run.run_treecorr(data1, rand1, data2, rand2, rmin, rmax, bin_sep, pimax, wp)
+        xi, d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs = run.pairs_treecorr(
+            data1, rand1, data2, rand2, rmin, rmax, bin_sep, pimax, wp)
+        end0 = time.time()
+        print "Time treecorr pairs:", end0 - start0
+        times_tcp[i] = end0 - start0
+        #
+        # start1 = time.time()
+        # #run.run_treecorr_orig(data1, rand1, data2, rand2, rmin, rmax, bin_sep, pimax, wp)
+        # end1 = time.time()
+        # print "Time treecorr:", end1 - start1
+        # times_tc[i] = end1 - start1
 
         # start2 = time.time()
         # d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs = pairs.pairs(data1, rand1, data2, rand2,
@@ -101,10 +116,27 @@ def time_pairs():
         # print "Time pairs:", end2 - start2
         # times_kd[i] = end2 - start2
 
+        # start3 = time.time()
+        # run.run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax)
+        # end3 = time.time()
+        # print "Time corrfunc:", end3 - start3
+        # times_cf[i] = end3 - start3
+
+        start4 = time.time()
+        a = estimator.est(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs,
+                          data1, rand1, data2, rand2, pimax, rmax, cosmo,
+                          basisfunc, K, wp, logrpbins_avg, logwidth)
+        end4 = time.time()
+        print "Time corrfunc:", end4 - start4
+        times_est[i] = end4 - start4
+
+        times_tot[i] = times_tcp[i] + times_est[i]
+
+
     # time_arrs = [times_tc, times_kd]
     # labels = ['treecorr', 'kdtree']
-    time_arrs = [times_tc]
-    labels = ['treecorr']
+    time_arrs = [times_tcp, times_est, times_tot]
+    labels = ['treecorr pairs', 'estimator', 'total']
 
     plot_times(time_arrs, labels, ndata)
 
