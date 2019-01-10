@@ -23,13 +23,26 @@ def counts(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins, pimax,
         rzdf = pd.DataFrame(z_rand)
         z_rand = rzdf.apply(get_comoving_dist, args=(cosmo,))[0].values
 
+    if weights_data is None:
+        weights_data = np.ones(ndata)
+    if weights_rand is None:
+        weights_rand = np.ones(nrand)
+
     cosmology = 1
     nthreads = 4
-    verbose = True 
-    dd_res_corrfunc = DDrppi_mocks(1, cosmology, nthreads, pimax, rpbins, ra_data, dec_data, z_data, is_comoving_dist=comoving, verbose=verbose)
+    verbose = False
+    weight_type = 'pair_product'
+
+    dd_res_corrfunc = DDrppi_mocks(1, cosmology, nthreads, pimax, rpbins, ra_data, dec_data, z_data,
+                                   weights1=weights_data, is_comoving_dist=comoving, verbose=verbose,
+                                   weight_type=weight_type)
     dr_res_corrfunc = DDrppi_mocks(0, cosmology, nthreads, pimax, rpbins, ra_data, dec_data, z_data,
-                                        RA2=ra_rand, DEC2=dec_rand, CZ2=z_rand, is_comoving_dist=comoving, verbose=verbose)
-    rr_res_corrfunc = DDrppi_mocks(1, cosmology, nthreads, pimax, rpbins, ra_rand, dec_rand, z_rand, is_comoving_dist=comoving, verbose=verbose)
+                                        RA2=ra_rand, DEC2=dec_rand, CZ2=z_rand, weights1=weights_data,
+                                   weights2=weights_rand, is_comoving_dist=comoving, verbose=verbose,
+                                   weight_type=weight_type)
+    rr_res_corrfunc = DDrppi_mocks(1, cosmology, nthreads, pimax, rpbins, ra_rand, dec_rand, z_rand,
+                                   weights1=weights_rand, is_comoving_dist=comoving, verbose=verbose,
+                                   weight_type=weight_type)
 
     dd_rp_pi_corrfunc = np.zeros((len(pibins) - 1, len(rpbins) - 1))
     dr_rp_pi_corrfunc = np.zeros((len(pibins) - 1, len(rpbins) - 1))
@@ -38,9 +51,10 @@ def counts(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins, pimax,
     for m in range(len(pibins)-1):
         for n in range(len(rpbins)-1):
             idx = (len(pibins)-1) * n + m
-            dd_rp_pi_corrfunc[m][n] = dd_res_corrfunc[idx][4]
-            dr_rp_pi_corrfunc[m][n] = dr_res_corrfunc[idx][4]
-            rr_rp_pi_corrfunc[m][n] = rr_res_corrfunc[idx][4]
+            # = count * avg weight
+            dd_rp_pi_corrfunc[m][n] = dd_res_corrfunc[idx][4]*dd_res_corrfunc[idx][5]
+            dr_rp_pi_corrfunc[m][n] = dr_res_corrfunc[idx][4]*dr_res_corrfunc[idx][5]
+            rr_rp_pi_corrfunc[m][n] = rr_res_corrfunc[idx][4]*rr_res_corrfunc[idx][5]
 
     return dd_rp_pi_corrfunc, dr_rp_pi_corrfunc, rr_rp_pi_corrfunc
 
@@ -61,6 +75,8 @@ def calc_wprp(dd, dr, rr, ndata, nrand, pibinwidth=1):
     assert type(pibinwidth) == int
     assert pibinwidth >= 1
     assert len(dd)%float(pibinwidth) == 0
+
+    print np.sum(dd, axis=0)
 
     #reshape into different bin widths
     dd = dd.reshape(-1, pibinwidth, dd.shape[-1]).sum(axis=1)

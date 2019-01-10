@@ -18,8 +18,8 @@ funcs = {'tophat': estimator.tophat, 'tophat_orig': estimator.tophat,
 def main():
 
     #nd = 10
-    #nd = 31
-    nd = 102
+    nd = 31
+    #nd = 102
     #nd = 307
     #nd = 3158
     #nd = 10015
@@ -67,19 +67,24 @@ def main():
     K*=3
 
 
-    start = time.time()
-    rps, wprps = run(data1, rand1, data2, rand2, pimax, rpmin, rpmax,
-                bin_sep, basisfuncs, K, cosmo, wp, rpbins, vals, logrpbins_avg, logwidth)
-
-    end = time.time()
-    print 'Time run: {:3f} s'.format(end-start)
+    # start = time.time()
+    # rps, wprps = run(data1, rand1, data2, rand2, pimax, rpmin, rpmax,
+    #             bin_sep, basisfuncs, K, cosmo, wp, rpbins, vals, logrpbins_avg, logwidth)
+    #
+    # end = time.time()
+    # print 'Time run: {:3f} s'.format(end-start)
 
     #labels += ['tophat_orig']
     #labels += ['treecorr']
 
     start = time.time()
+    # weights_data = np.full(len(data1.index), 1.0)
+    # weights_rand = np.full(len(rand1.index), 1.0)
+    # est_corrfunc, wprp_corrfunc = run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo,
+    #                             weights_data=weights_data, weights_rand=weights_rand, nopi=True)
     est_corrfunc, wprp_corrfunc = run_corrfunc(data1, rand1, data2, rand2,
-                                               rpbins, pimax, nopi=True)
+                                               rpbins, pimax, cosmo, nopi=True)
+    print wprp_corrfunc
     end = time.time()
     print 'Time corrfunc: {:3f} s'.format(end-start)
     rps.append(rpbins_avg)
@@ -192,12 +197,13 @@ def calc_wprp_orig(a, basisfunc, K, rpbins, *args):
     return rpbins_avg, wprp
 
 
-def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo, nopi=False, pibinwidth=1):
+def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo, weights_data=None,
+                 weights_rand=None, nopi=False, pibinwidth=1):
     print 'Running corrfunc'
     #can only do autocorrelations right now
     dd, dr, rr = corrfunc.counts(data1['ra'].values, data1['dec'].values, data1['z'].values,
-                    rand1['ra'].values, rand1['dec'].values, rand1['z'].values,
-                    rpbins, pimax, cosmo, comoving=True)
+                    rand1['ra'].values, rand1['dec'].values, rand1['z'].values, rpbins, pimax,
+                    cosmo,  weights_data=weights_data, weights_rand=weights_rand, comoving=True)
 
     # dd = np.sum(dd, axis=0)
     # dr = np.sum(dr, axis=0)
@@ -411,6 +417,13 @@ def get_comoving_dist(z):
 def calc_ls(dd_counts, dr_counts, rr_counts, ndata, nrand):
     fN = float(nrand)/float(ndata)
     return (fN*fN*dd_counts - 2*fN*dr_counts + rr_counts)/rr_counts
+
+def save_results(fn, rps, wprps, labels):
+    np.save(fn, [rps, wprps, labels])
+
+def load_results(fn):
+    rps, wprps, labels = np.load(fn)
+    return rps, wprps, labels
 
 
 if __name__=='__main__':

@@ -1,13 +1,20 @@
 from matplotlib import pyplot as plt
 import numpy as np
 
+import run
 
 
-
-cols = {'corrfunc':'grey', 'tophat':'blue', 'piecewise':'red',
+color_dict = {'corrfunc':'grey', 'tophat':'blue', 'piecewise':'red',
           'tophat_orig':'cyan', 'gaussian':'green', 'trig':'magenta',
           'treecorr': 'orange', 'top_quad':'purple'}
 
+color_list = ['red', 'orange', 'green', 'blue', 'cyan', 'magenta']
+
+def main():
+    fn = "../results/dr72_bins_frac0.05.npy"
+
+    rps, wprps, labels = run.load_results(fn)
+    plot_wprp(rps, wprps, labels)
 
 def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None):
 
@@ -21,10 +28,12 @@ def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None):
         rp = rps[i]
         wprp = np.array(wprps[i])
         label = labels[i]
-        if colors:
+        if label in color_dict:
+            color = color_dict[label]
+        elif colors:
             color = colors[i]
         else:
-            color = cols[label]
+            color = color_list[i]
         # if label=='tophat':
         #     plt.step(rps, [0]+wprp, marker=None, label=basisname)
         #     plt.xscale('log')
@@ -47,3 +56,7 @@ def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None):
                 ax1.set_ylabel(r'$w_p$/$w_{{p,\mathrm{{{0}}}}}$'.format(wp_tocompare))
 
     plt.show()
+
+
+if __name__=="__main__":
+    main()

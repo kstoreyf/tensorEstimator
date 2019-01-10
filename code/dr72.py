@@ -43,35 +43,33 @@ def run_dr72():
 
 def check_samples():
     samplenums = [7, 8, 9, 10, 11, 12]
-    print cosmo.h
     q0 = 2.0
     q1 = -1.0
     qz0 = 0.1
+    cosmo = LambdaCDM(H0=70, Om0=0.25, Ob0=0.045, Ode0=0.75)
+
     for samplenum in samplenums:
         fn = '../data/lss.dr72bright{}_czcut.dat'.format(samplenum)
         data = pd.read_csv(fn)
         print 'Sample {}, {}'.format(samplenum, labels_mr[samplenum])
         print 'ndata=', len(data.index)
-        Mr_h = data['M_r'] + 5*np.log10(cosmo.h)
+        #Mr_h = data['M_r'] + 5*np.log10(cosmo.h)
         curr_zdep = q0 * (1.0 + q1 * (data['z'] - qz0))
         Mr_z = data['M_r'] + curr_zdep*(data['z']-qz0)
         print min(data['M_r']), max(data['M_r']), np.mean(data['M_r']), "|", \
             min(Mr_z), max(Mr_z), np.mean(Mr_z)
         # so the given data['M_r'] has already been evolution corrected i think?
-        #min(Mr_h), max(Mr_h), np.mean(Mr_h)
 
-def run_bins(min_sep, max_sep, bin_size, wp):
-    #samplenums = [7, 8, 9, 10, 11, 12]
-    #samplenums = [9,10,11]
-    samplenums = [7]
+def run_bins(min_sep, max_sep, bin_size, wp, saveto=None):
+    samplenums = [7, 8, 9, 10, 11, 12]
+    #samplenums = [9,10]
+    #samplenums = [7]
 
     #samplenums = []
-
+    saveto = "../results/dr72_bins_frac0.05.npy"
     cosmo = LambdaCDM(H0=70, Om0=0.25, Ob0=0.045, Ode0=0.75) 
     K = (np.log10(max_sep) - np.log10(min_sep))/bin_size
-    print K
     rpbins = np.logspace(np.log(min_sep), np.log(max_sep), K+1, base=np.e)
-    print rpbins
     rpbins_avg = 0.5 * (rpbins[1:] + rpbins[:-1])
     rps = [rpbins_avg]*len(samplenums)
     pibinwidth = 2 #Mpc/h
@@ -90,7 +88,10 @@ def run_bins(min_sep, max_sep, bin_size, wp):
         wprps.append(xi) #*2?
         cols.append(colors[samplenum])
 
-    #plotter.plot_wprp(rps, wprps, labels, colors=cols)
+    if saveto:
+        run.save_results(saveto, rps, wprps, labels)
+
+    plotter.plot_wprp(rps, wprps, labels, colors=cols)
 
 
 def run_together(min_sep, max_sep, bin_size, K, pimax, wp):
@@ -110,8 +111,8 @@ def run_together(min_sep, max_sep, bin_size, K, pimax, wp):
     #basisfuncs = [estimator.top_z]
     #basisfuncs = [estimator.top_Mr]
     basisfuncs = [estimator.gauss_Mr]
-
     #basisfuncs = [estimator.tophat]
+
     K *= 3
     #vals = [0.1, 0.15, 0.2, 0.25]
     vals = [-22.5, -21.5, -20.5, -19.5, -18.5]
@@ -137,6 +138,8 @@ def run_together(min_sep, max_sep, bin_size, K, pimax, wp):
     print 'Time for all, ndata={}: {}'.format(len(data1.index), end-start)
 
     plotter.plot_wprp(rps, wprps, labels, colors=cols)
+
+
 
 
 def combine_samples(samplenums):
@@ -175,9 +178,11 @@ def run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo, bin_size=N
     print 'ndata=', len(data1.index)
     print 'nrand=', len(rand1.index)
 
-    frac = 0.1
+    frac = 0.05
     data1 = data1.sample(frac=frac)
     rand1 = rand1.sample(frac=frac)
+    # data1 = data1[:int(frac*len(data1.index))]
+    # rand1 = rand1[:int(frac*len(rand1.index))]
 
     print 'ndata=', len(data1.index)
     print 'nrand=', len(rand1.index)
@@ -188,7 +193,11 @@ def run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo, bin_size=N
     start = time.time()
     #xi, dd, dr, rd, rr = run.run_treecorr(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp)
     #xi, dd, dr, rd, rr = run.run_treecorr_orig(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp)
-    est_ls, wprp = run.run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo, pibinwidth=pibinwidth)
+    weights_data = data1['fgotten']
+    weights_rand = rand1['fgotten']
+    est_ls, wprp = run.run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo,
+                                    weights_data=weights_data, weights_rand=weights_rand,
+                                    pibinwidth=pibinwidth)
 
     end = time.time()
     print 'Time for sample {}, ndata={}: {}'.format(
@@ -198,8 +207,9 @@ def run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo, bin_size=N
 
 def get_random(samplenum):
     fn = '../data/random-0.dr72bright.dat'
+    # pretty sure fgotten is correct but couldn't find anywhere
     df_rand = pd.read_csv(fn, header=None, delim_whitespace=True, names=['ra',
-            'dec', 'sector', 'mregion', '?', 'min_mag?'])
+            'dec', 'sector', 'mregion', 'fgotten', 'min_mag?'])
 
     nrand = len(df_rand.index)
     df_rand['cz'] = np.random.random(nrand)*(cz_lims[samplenum][1]-cz_lims[samplenum][0]) \
