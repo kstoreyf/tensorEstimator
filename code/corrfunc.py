@@ -5,28 +5,31 @@ from astropy.cosmology import LambdaCDM
 
 
 
-cosmo = LambdaCDM(H0=70, Om0=0.3, Ode0=0.7)
 
 def counts(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins, pimax,
-         weights_data=None, weights_rand=None, pibinwidth=1, comoving=False):
+         cosmo, weights_data=None, weights_rand=None, comoving=False):
 
     assert(len(ra_data)==len(dec_data) and len(ra_data)==len(z_data))
     assert(len(ra_rand)==len(dec_rand) and len(ra_rand)==len(z_rand))
 
     ndata = len(ra_data)
     nrand = len(ra_rand)
+    pibinwidth = 1
     pibins = np.arange(0, pimax + pibinwidth, pibinwidth)
 
     if comoving:
         zdf = pd.DataFrame(z_data)
-        z_data = zdf.apply(get_comoving_dist)[0].values
+        z_data = zdf.apply(get_comoving_dist, args=(cosmo,))[0].values
         rzdf = pd.DataFrame(z_rand)
-        z_rand = rzdf.apply(get_comoving_dist)[0].values
+        z_rand = rzdf.apply(get_comoving_dist, args=(cosmo,))[0].values
 
-    dd_res_corrfunc = DDrppi_mocks(1, 2, 0, pimax, rpbins, ra_data, dec_data, z_data, is_comoving_dist=comoving)
-    dr_res_corrfunc = DDrppi_mocks(0, 2, 0, pimax, rpbins, ra_data, dec_data, z_data,
-                                        RA2=ra_rand, DEC2=dec_rand, CZ2=z_rand, is_comoving_dist=comoving)
-    rr_res_corrfunc = DDrppi_mocks(1, 2, 0, pimax, rpbins, ra_rand, dec_rand, z_rand, is_comoving_dist=comoving)
+    cosmology = 1
+    nthreads = 4
+    verbose = True 
+    dd_res_corrfunc = DDrppi_mocks(1, cosmology, nthreads, pimax, rpbins, ra_data, dec_data, z_data, is_comoving_dist=comoving, verbose=verbose)
+    dr_res_corrfunc = DDrppi_mocks(0, cosmology, nthreads, pimax, rpbins, ra_data, dec_data, z_data,
+                                        RA2=ra_rand, DEC2=dec_rand, CZ2=z_rand, is_comoving_dist=comoving, verbose=verbose)
+    rr_res_corrfunc = DDrppi_mocks(1, cosmology, nthreads, pimax, rpbins, ra_rand, dec_rand, z_rand, is_comoving_dist=comoving, verbose=verbose)
 
     dd_rp_pi_corrfunc = np.zeros((len(pibins) - 1, len(rpbins) - 1))
     dr_rp_pi_corrfunc = np.zeros((len(pibins) - 1, len(rpbins) - 1))
@@ -55,16 +58,14 @@ def calc_wprp_nopi(dd, dr, rr, ndata, nrand):
 
 def calc_wprp(dd, dr, rr, ndata, nrand, pibinwidth=1):
 
-    print dd
-
     assert type(pibinwidth) == int
     assert pibinwidth >= 1
     assert len(dd)%float(pibinwidth) == 0
 
     #reshape into different bin widths
-    dd = dd.reshape(-1, 4, dd.shape[-1]).sum(axis=1)
-    dr = dr.reshape(-1, 4, dr.shape[-1]).sum(axis=1)
-    rr = rr.reshape(-1, 4, rr.shape[-1]).sum(axis=1)
+    dd = dd.reshape(-1, pibinwidth, dd.shape[-1]).sum(axis=1)
+    dr = dr.reshape(-1, pibinwidth, dr.shape[-1]).sum(axis=1)
+    rr = rr.reshape(-1, pibinwidth, rr.shape[-1]).sum(axis=1)
 
     est_ls = calc_ls(dd, dr, rr, ndata, nrand)
     wprp = 2*np.sum(est_ls, axis=0)
@@ -72,7 +73,7 @@ def calc_wprp(dd, dr, rr, ndata, nrand, pibinwidth=1):
     return est_ls, wprp
 
 
-def get_comoving_dist(z):
+def get_comoving_dist(z, cosmo):
     comov = cosmo.comoving_distance(z)
     return comov.value*cosmo.h
 

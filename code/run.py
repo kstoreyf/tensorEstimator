@@ -192,21 +192,21 @@ def calc_wprp_orig(a, basisfunc, K, rpbins, *args):
     return rpbins_avg, wprp
 
 
-def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, nopi=False, pibinwidth=pibinwidth):
+def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo, nopi=False, pibinwidth=1):
     print 'Running corrfunc'
     #can only do autocorrelations right now
     dd, dr, rr = corrfunc.counts(data1['ra'].values, data1['dec'].values, data1['z'].values,
                     rand1['ra'].values, rand1['dec'].values, rand1['z'].values,
-                    rpbins, pimax, comoving=True)
+                    rpbins, pimax, cosmo, comoving=True)
 
     # dd = np.sum(dd, axis=0)
     # dr = np.sum(dr, axis=0)
     # rr = np.sum(rr, axis=0)
 
-    if nopi:
-        est_ls, wprp = corrfunc.calc_wprp_nopi(dd, dr, rr, len(data1), len(rand1))
-    else:
-        est_ls, wprp = corrfunc.calc_wprp(dd, dr, rr, len(data1), len(rand1), pibinwidth=pibinwidth)
+    #if nopi:
+    #    est_ls, wprp = corrfunc.calc_wprp_nopi(dd, dr, rr, len(data1), len(rand1))
+    #else:
+    est_ls, wprp = corrfunc.calc_wprp(dd, dr, rr, len(data1), len(rand1), pibinwidth=pibinwidth)
     # nd = float(len(data1['ra'].values))
     # nr = float(len(rand1['ra'].values))
     # wprp = (dd*(nr/nd)*(nr/nd) - 2*dr*(nr/nd) + rr)/rr

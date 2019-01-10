@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import pandas as pd
 import numpy as np
 import time
@@ -19,7 +20,6 @@ colors = {7:'red', 8:'orange', 9:'green',
           10:'blue', 11:'cyan', 12:'magenta'}
 c_kms = 3.e5  # c in km/s
 
-cosmo = LambdaCDM(H0=70, Om0=0.3, Ode0=0.7)
 
 
 def main():
@@ -40,7 +40,6 @@ def run_dr72():
     print 'Running'
     run_bins(min_sep, max_sep, bin_size, wp)
     #run_together(min_sep, max_sep, bin_size, K, pimax, wp)
-
 
 def check_samples():
     samplenums = [7, 8, 9, 10, 11, 12]
@@ -68,6 +67,7 @@ def run_bins(min_sep, max_sep, bin_size, wp):
 
     #samplenums = []
 
+    cosmo = LambdaCDM(H0=70, Om0=0.25, Ob0=0.045, Ode0=0.75) 
     K = (np.log10(max_sep) - np.log10(min_sep))/bin_size
     print K
     rpbins = np.logspace(np.log(min_sep), np.log(max_sep), K+1, base=np.e)
@@ -84,7 +84,9 @@ def run_bins(min_sep, max_sep, bin_size, wp):
         else:
             labels.append(samplenum)
         pimax = pimaxs[samplenum]
-        xi = run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, pibinwidth=pibinwidth)
+        xi = run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo, pibinwidth=pibinwidth)
+        print samplenum
+        print xi
         wprps.append(xi) #*2?
         cols.append(colors[samplenum])
 
@@ -162,7 +164,7 @@ def combine_samples(samplenums):
     return datadf, randdf
 
 
-def run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, bin_size=None, pibinwidth=pibinwidth):
+def run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo, bin_size=None, pibinwidth=2):
 
     fn = '../data/lss.dr72bright{}_czcut.dat'.format(samplenum)
     data1 = pd.read_csv(fn)
@@ -173,7 +175,7 @@ def run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, bin_size=None, pi
     print 'ndata=', len(data1.index)
     print 'nrand=', len(rand1.index)
 
-    frac = 0.08
+    frac = 0.1
     data1 = data1.sample(frac=frac)
     rand1 = rand1.sample(frac=frac)
 
@@ -186,7 +188,7 @@ def run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, bin_size=None, pi
     start = time.time()
     #xi, dd, dr, rd, rr = run.run_treecorr(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp)
     #xi, dd, dr, rd, rr = run.run_treecorr_orig(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp)
-    est_ls, wprp = run.run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, pibinwidth=pibinwidth)
+    est_ls, wprp = run.run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo, pibinwidth=pibinwidth)
 
     end = time.time()
     print 'Time for sample {}, ndata={}: {}'.format(
