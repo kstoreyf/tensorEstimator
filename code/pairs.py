@@ -16,17 +16,15 @@ def pairs(data1, rand1, data2, rand2, rpmax, cosmo, wp):
     print 'Computing R1R2 pairs'
     r1r2pairs = compute_pairs(rand1, rand2, r2tree, rpmax, cosmo, wp)
 
-    print len(data1)
-    print len(rand1)
-    print len(d1d2pairs)
-    print len(d1r2pairs)
-    print len(d2r1pairs)
-    print len(r1r2pairs)
+    #Eliminate self-pairs with zero separation
+    d1d2pairs = [p for p in d1d2pairs if p[2]>0]
+    d1r2pairs = [p for p in d1r2pairs if p[2]>0]
+    d2r1pairs = [p for p in d2r1pairs if p[2]>0]
+    r1r2pairs = [p for p in r1r2pairs if p[2]>0]
 
     return d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs
 
 
-# TODO: rename rp to r
 def compute_pairs(df_cat, df_tree, tree, rmax, cosmo, wp):
 
     pairs = []

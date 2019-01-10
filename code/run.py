@@ -12,6 +12,9 @@ import estimator
 import plotter
 
 
+funcs = {'tophat': estimator.tophat, 'tophat_orig': estimator.tophat,
+         'top_z': estimator.top_z}
+
 def main():
 
     #nd = 10
@@ -32,26 +35,18 @@ def main():
     pimax = 40 #Mpc/h
     rpmin = 0.5
     rpmax = 10. #Mpc/h
-    bin_sep = np.log(rpmax / rpmin) / float(K)
-    #bin_sep = np.log10(rpmax / rpmin) / float(K)
+    bin_sep = np.log(rpmax / rpmin) / float(K) #natural log as treecorr expects
 
-    rps = []
-    wprps = []
-    labels = []
+    basisfuncs = [estimator.top_z]
+    #basisfuncs = [estimator.gauss_z]
+    #basisfuncs = [estimator.tophat]
 
-    basisfunc = [estimator.tophat, estimator.gaussian]
-    labels = ['tophat', 'gaussian']
-    #basisfunc = [estimator.tophat, estimator.piecewise, estimator.gaussian, estimator.trig]
+    #basisfuncs = [estimator.tophat, estimator.piecewise, estimator.gaussian, estimator.trig]
     #labels = ['tophat', 'piecewise', 'gaussian', 'trig']
 
-
     rpbins = np.logspace(np.log10(rpmin), np.log10(rpmax), K+1)
-    #rpbins = np.logspace(np.log(rpmin), np.log(rpmax), K+1, base=np.e)
-
     rpbins_avg = 0.5 * (rpbins[1:] + rpbins[:-1])
     logrpbins_avg = np.log10(rpbins_avg)
-    #logrpbins_avg = np.log(rpbins_avg)
-
     logwidth = np.log10(rpbins_avg[1]) - np.log10(rpbins_avg[0])
     wp = True #vs 3d
 
@@ -61,14 +56,25 @@ def main():
     data2 = data1
     rand2 = rand1
 
+    #vals = np.linspace(min(data1['z']), max(data1['z']), 8)
+    vals = [0.45, 0.5, 0.55, 0.6, 0.65]
+    labels = ["z={:.2f}".format(val) for val in vals]
+
+    #vals = [0.55]
+    #labels =['0.55']
+    # vals = [None]
+    # labels = ['top']
+    K*=3
+
+
     start = time.time()
     rps, wprps = run(data1, rand1, data2, rand2, pimax, rpmin, rpmax,
-                bin_sep, basisfunc, K, cosmo, wp, rpbins, logrpbins_avg, logwidth)
+                bin_sep, basisfuncs, K, cosmo, wp, rpbins, vals, logrpbins_avg, logwidth)
 
     end = time.time()
     print 'Time run: {:3f} s'.format(end-start)
 
-    labels += ['tophat_orig']
+    #labels += ['tophat_orig']
     #labels += ['treecorr']
 
     start = time.time()
@@ -79,10 +85,7 @@ def main():
     rps.append(rpbins_avg)
     wprps.append(wprp_corrfunc)
     labels.append('corrfunc')
-    #
-    #
-    # data1 = pd.read_csv(data1fn)
-    # rand1 = pd.read_csv(rand1fn)
+
     # xi_tree = run_treecorr(data1, rand1, data1, rand1, rpmin, rpmax, bin_sep, pimax, wp)
     # rps.append(rpbins_avg)
     # wprps.append(xi_tree)
@@ -94,7 +97,10 @@ def main():
     print len(wprps)
     print len(rps)
     print labels
-    plotter.plot_wprp(rps, wprps, labels, wp_tocompare='tophat_orig')
+    colors = ['purple', 'red', 'orange', 'yellow', 'green', 'blue', 'cyan', 'magenta', 'grey']
+    plotter.plot_wprp(rps, wprps, labels, colors=colors, wp_tocompare='corrfunc')
+
+
 
 def load_data(datafn, randfn):
     print 'Loading data'
@@ -105,67 +111,49 @@ def load_data(datafn, randfn):
     rand = add_info(rand, zfile=None)
     return data, rand
 
-def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfunc, K, cosmo, wp, rpbins, *args):
 
-    # should make so can take list
+def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
+                   K, cosmo, wp, rpbins, vals, *args):
 
-    # start = time.time()
-    # d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs = pairs.pairs(data1, rand1, data2, rand2,
-    #                                                          rmax, cosmo, wp)
-    # end = time.time()
-    # print "Time pairs:", end-start
-    #
-    # print d1d2pairs
-    # print len(d1d2pairs)
-    #
-    # #Eliminate self-pairs with zero separation
-    # d1d2pairs = [p for p in d1d2pairs if p[2]>0]
-    # d1r2pairs = [p for p in d1r2pairs if p[2]>0]
-    # d2r1pairs = [p for p in d2r1pairs if p[2]>0]
-    # r1r2pairs = [p for p in r1r2pairs if p[2]>0]
-    #
-    # print d1d2pairs
-    # print len(d1d2pairs)
+    print args
     # if wp, rmax means rpmax
     # TODO: now mine returns all up to max and treecorr's returns above rmin too - make consistent!
-    # TODO: and don't forget self-corrs
     #what would happen if I didn't include symmetric pairs for dd, rr?
     #have to do with 2 in dr maybe?
     #ooh poss bc wouldn't do if had 2 diff data catalogs...
+    print 'Pairs'
     start = time.time()
     xi, d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs = pairs_treecorr(data1, rand1, data2, rand2,
                                                                 rmin, rmax, bin_sep, pimax, wp)
     end = time.time()
     print "Time treecorr pairs:", end-start
-    print len(d1d2pairs)
-    # # d1d2pairs = np.array(list(d1d2pairs)+list(d1d2pairs))
-    # # d1r2pairs = np.array(list(d1r2pairs)+list(d1r2pairs))
-    # # d2r1pairs = np.array(list(d2r1pairs)+list(d2r1pairs))
-    # # r1r2pairs = np.array(list(r1r2pairs)+list(r1r2pairs))
-    # print 'pair comp'
-    # print d1d2pairs
-    # print len(d1d2pairs)
+    print 'Pairs (DD, DR, RD, RR):', len(d1d2pairs), len(d1r2pairs), len(d2r1pairs), len(r1r2pairs)
 
-    #TODO next: decide whether want to include self-corrs (1, 1) and double count pairs /
-    #TODO aka (1,2) and (2,1), and calculate xi in the right corresponding way
-
-    #print stopit
-
-    if type(basisfunc)!=list:
-        basisfunc = [basisfunc]
+    print 'Est'
+    if type(basisfuncs)!=list:
+        basisfuncs = [basisfuncs]
     a = estimator.est(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs,
-                      data1, rand1, data2, rand2, pimax, rmax, cosmo, basisfunc, K, wp, *args)
+                      data1, rand1, data2, rand2, pimax, rmax, cosmo, basisfuncs, K, wp, *args)
 
     # TODO: change for not projected? look at corrfunc
 
-    rps, wprps = calc_wprp(a, basisfunc, K, rpbins, *args)
-    # just tophat orig
-    rps_orig, wprps_orig = calc_wprp_orig(a, [basisfunc[0]], K, rpbins, *args)
-    #print wprps
-    print wprps_orig
+    # rps = []
+    # wprps = []
+    # for bb in range(len(basisfuncs)):
+    #     for val in vals:
+    #         rp, wprp = calc_wprp(a, basisfuncs[bb], K, rpbins, val, *args)
+    #         rps.append(rp)
+    #         wprps.append(wprp)
+    print 'wprp!'
+    rps, wprps = calc_wprp(a, basisfuncs, K, rpbins, vals, *args)
 
-    rps += rps_orig
-    wprps += wprps_orig
+    # just tophat orig
+    #rps_orig, wprps_orig = calc_wprp_orig(a, [basisfunc[0]], K, rpbins, *args)
+    #print wprps
+    # print wprps_orig
+    #,
+    # rps += rps_orig
+    # wprps += wprps_orig
 
     # rps += rps_orig
     # wprps.append(xi*2)
@@ -173,40 +161,38 @@ def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfunc, K, co
 
     return rps, wprps
 
+def calc_wprp(a, basisfunc, K, rpbins, vals, *args):
 
-def calc_wprp(a, basisfunc, K, rpbins, *args):
+    #x = np.logspace(np.log10(min(rpbins)), np.log10(max(rpbins)), 500)
+    x = 0.5*np.array(rpbins[1:]+rpbins[:-1])
 
-    x = np.logspace(np.log10(min(rpbins)), np.log10(max(rpbins)), 500)
     rps = []
     wprps = []
+    print 'WPRP'
     for bb in range(len(basisfunc)):
-        bases = basisfunc[bb](None, None, None, None, x, *args)
-        xi_rp = np.zeros_like(x)
-        for k in range(len(bases)):
-            xi_rp += a[bb][k]*bases[k]
-
-        rps.append(x)
-        wprps.append(list(2*xi_rp))
+        for val in vals:
+            bases = basisfunc[bb](None, None, None, None, x, *args, val=val)
+            #xi_rp = np.zeros_like(x)
+            #for k in range(len(bases)):
+            #    xi_rp += a[bb][k]*ba.arrayses[k]
+            xi_rp = np.matmul(a[bb], bases)
+            xi_rp = np.squeeze(np.asarray(xi_rp))
+            rps.append(x)
+            wprps.append(list(2*xi_rp))
     return rps, wprps
-
 
 def calc_wprp_orig(a, basisfunc, K, rpbins, *args):
 
     rpbins_avg = 0.5*np.array(rpbins[1:]+rpbins[:-1])
-    rps = []
-    wprps = []
-    for bb in range(len(basisfunc)):
-        xi_rp = np.zeros(K)
-        for i in range(K):
-            u = basisfunc[bb](None, None, None, None, rpbins_avg[i], *args)
-            xi_rp[i] = np.matmul(a[bb], u)
-
-        rps.append(rpbins_avg)
-        wprps.append(list(2*xi_rp))
-    return rps, wprps
+    xi_rp = np.zeros(K)
+    for i in range(K):
+        u = basisfunc(None, None, None, None, rpbins_avg[i], *args)
+        xi_rp[i] = np.matmul(a, u)
+    wprp = list(2*xi_rp)
+    return rpbins_avg, wprp
 
 
-def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, nopi=False):
+def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, nopi=False, pibinwidth=pibinwidth):
     print 'Running corrfunc'
     #can only do autocorrelations right now
     dd, dr, rr = corrfunc.counts(data1['ra'].values, data1['dec'].values, data1['z'].values,
@@ -220,7 +206,7 @@ def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, nopi=False):
     if nopi:
         est_ls, wprp = corrfunc.calc_wprp_nopi(dd, dr, rr, len(data1), len(rand1))
     else:
-        est_ls, wprp = corrfunc.calc_wprp(dd, dr, rr, len(data1), len(rand1))
+        est_ls, wprp = corrfunc.calc_wprp(dd, dr, rr, len(data1), len(rand1), pibinwidth=pibinwidth)
     # nd = float(len(data1['ra'].values))
     # nr = float(len(rand1['ra'].values))
     # wprp = (dd*(nr/nd)*(nr/nd) - 2*dr*(nr/nd) + rr)/rr
@@ -367,10 +353,12 @@ def add_info(df, zfile=None):
     zdf = pd.read_csv(zfile)
 
     # Get comoving distances
-    interp_dcm = interpolate.interp1d(zdf['z_round'], zdf['dcm_mpc'])
-    interp_dcm_transverse = interpolate.interp1d(zdf['z_round'], zdf['dcm_transverse_mpc'])
-    df['dcm_mpc'] = df['z'].apply(interp_dcm)
-    df['dcm_transverse_mpc'] = df['z'].apply(interp_dcm_transverse)
+    # interp_dcm = interpolate.interp1d(zdf['z_round'], zdf['dcm_mpc'])
+    # interp_dcm_transverse = interpolate.interp1d(zdf['z_round'], zdf['dcm_transverse_mpc'])
+    # df['dcm_mpc'] = df['z'].apply(interp_dcm)
+    # df['dcm_transverse_mpc'] = df['z'].apply(interp_dcm_transverse)
+    df['dcm_mpc'] = df['z'].apply(get_comoving_dist)
+    df['dcm_transverse_mpc'] = df['dcm_mpc']
 
     #3d position in Mpc
     df['xpos'], df['ypos'], df['zpos'] = zip(*df.apply(unitxyz_to_xyz, axis=1))

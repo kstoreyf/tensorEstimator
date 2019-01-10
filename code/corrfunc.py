@@ -53,7 +53,18 @@ def calc_wprp_nopi(dd, dr, rr, ndata, nrand):
 
     return est_ls, wprp
 
-def calc_wprp(dd, dr, rr, ndata, nrand):
+def calc_wprp(dd, dr, rr, ndata, nrand, pibinwidth=1):
+
+    print dd
+
+    assert type(pibinwidth) == int
+    assert pibinwidth >= 1
+    assert len(dd)%float(pibinwidth) == 0
+
+    #reshape into different bin widths
+    dd = dd.reshape(-1, 4, dd.shape[-1]).sum(axis=1)
+    dr = dr.reshape(-1, 4, dr.shape[-1]).sum(axis=1)
+    rr = rr.reshape(-1, 4, rr.shape[-1]).sum(axis=1)
 
     est_ls = calc_ls(dd, dr, rr, ndata, nrand)
     wprp = 2*np.sum(est_ls, axis=0)

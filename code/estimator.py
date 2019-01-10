@@ -59,7 +59,7 @@ def calc_amplitudes(dd, dr, rd, rr, qq):
     qqinv = np.matrix(qq).I
     numerator = dd - dr - rd + rr
     a = np.matmul(qqinv, numerator)
-    return a.A1
+    return a
 
 
 def project_pairs(pairs, cat1, cat2, pimax, rmax, cosmo, basisfunc, K, wp, tensor, *args):
@@ -156,9 +156,37 @@ def tophat(cat1, cat2, i, j, rp, logbins_avg, logwidth):
     u = np.array([top(logrp, peak, logwidth) for peak in logbins_avg])
     return u
 
-def top_quad(cat1, cat2, i, j, rp, logbins_avg, logwidth, val):
+#def quad(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None)
+
+def top_z(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
     logrp = np.log10(rp)
     u = np.array([top(logrp, peak, logwidth) for peak in logbins_avg])
+    if not val:
+        val = 0.5*(cat1['z'][i] + cat2['z'][j])
+    u = np.concatenate((u, u*val, u*val**2))
+    return u
+
+def top_Mr(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
+    logrp = np.log10(rp)
+    u = np.array([top(logrp, peak, logwidth) for peak in logbins_avg])
+    if not val:
+        val = 0.5*(cat1['M_r'][i] + cat2['M_r'][j])
+    u = np.concatenate((u, u*val, u*val**2))
+    return u
+
+def gauss_Mr(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
+    logrp = np.log10(rp)
+    u = np.array([gauss(logrp, peak, logwidth) for peak in logbins_avg])
+    if not val:
+        val = 0.5*(cat1['M_r'][i] + cat2['M_r'][j])
+    u = np.concatenate((u, u*val, u*val**2))
+    return u
+
+def gauss_z(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
+    logrp = np.log10(rp)
+    u = np.array([gauss(logrp, peak, logwidth) for peak in logbins_avg])
+    if not val:
+        val = 0.5*(cat1['z'][i] + cat2['z'][j])
     u = np.concatenate((u, u*val, u*val**2))
     return u
 

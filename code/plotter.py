@@ -6,7 +6,7 @@ import numpy as np
 
 cols = {'corrfunc':'grey', 'tophat':'blue', 'piecewise':'red',
           'tophat_orig':'cyan', 'gaussian':'green', 'trig':'magenta',
-          'treecorr': 'orange'}
+          'treecorr': 'orange', 'top_quad':'purple'}
 
 
 def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None):
@@ -17,7 +17,7 @@ def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None):
     else:
         fig = plt.figure()
         ax0 = fig.gca()
-    for i in range(len(labels)):
+    for i in range(len(rps)):
         rp = rps[i]
         wprp = np.array(wprps[i])
         label = labels[i]
@@ -30,7 +30,7 @@ def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None):
         #     plt.xscale('log')
         #     plt.yscale('log')
         # else:
-        ax0.loglog(rp, wprp, label=label, color=color, marker=None)
+        ax0.loglog(rp, wprp, label=label, color=color, marker='o')
 
         plt.xlabel(r'$r_p$ (Mpc/h)')
         ax0.set_ylabel(r'$w_p$($r_p$)')
