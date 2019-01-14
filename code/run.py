@@ -18,8 +18,8 @@ funcs = {'tophat': estimator.tophat, 'tophat_orig': estimator.tophat,
 def main():
 
     #nd = 10
-    nd = 31
-    #nd = 102
+    #nd = 31
+    nd = 102
     #nd = 307
     #nd = 3158
     #nd = 10015
@@ -37,18 +37,24 @@ def main():
     rpmax = 10. #Mpc/h
     bin_sep = np.log(rpmax / rpmin) / float(K) #natural log as treecorr expects
 
-    basisfuncs = [estimator.top_z]
-    #basisfuncs = [estimator.gauss_z]
-    #basisfuncs = [estimator.tophat]
 
     #basisfuncs = [estimator.tophat, estimator.piecewise, estimator.gaussian, estimator.trig]
     #labels = ['tophat', 'piecewise', 'gaussian', 'trig']
 
     rpbins = np.logspace(np.log10(rpmin), np.log10(rpmax), K+1)
-    rpbins_avg = 0.5 * (rpbins[1:] + rpbins[:-1])
-    logrpbins_avg = np.log10(rpbins_avg)
-    logwidth = np.log10(rpbins_avg[1]) - np.log10(rpbins_avg[0])
+    logrpbins_avg = logbins_avg(rpbins)
+    rpbins_avg = bins_logavg(rpbins)
+    logwidth = log_width(rpbins)
     wp = True #vs 3d
+
+    #basisfuncs = [estimator.tophat_fast]
+    #bin_arg = np.log10(rpbins)
+    #basisfuncs = [estimator.top_z]
+    #basisfuncs = [estimator.gauss_z]
+    basisfuncs = [estimator.tophat]
+    labels = ['tophat']
+    bin_arg = logrpbins_avg
+    vals = None
 
     cosmo = LambdaCDM(H0=70, Om0=0.3, Ode0=0.7)
 
@@ -57,22 +63,22 @@ def main():
     rand2 = rand1
 
     #vals = np.linspace(min(data1['z']), max(data1['z']), 8)
-    vals = [0.45, 0.5, 0.55, 0.6, 0.65]
-    labels = ["z={:.2f}".format(val) for val in vals]
+    #vals = [0.45, 0.5, 0.55, 0.6, 0.65]
+    #labels = ["z={:.2f}".format(val) for val in vals]
 
     #vals = [0.55]
     #labels =['0.55']
     # vals = [None]
     # labels = ['top']
-    K*=3
+    #K*=3
 
 
-    # start = time.time()
-    # rps, wprps = run(data1, rand1, data2, rand2, pimax, rpmin, rpmax,
-    #             bin_sep, basisfuncs, K, cosmo, wp, rpbins, vals, logrpbins_avg, logwidth)
-    #
-    # end = time.time()
-    # print 'Time run: {:3f} s'.format(end-start)
+    start = time.time()
+    rps, wprps = run(data1, rand1, data2, rand2, pimax, rpmin, rpmax,
+                bin_sep, basisfuncs, K, cosmo, wp, rpbins, vals, bin_arg, logwidth)
+
+    end = time.time()
+    print 'Time run: {:3f} s'.format(end-start)
 
     #labels += ['tophat_orig']
     #labels += ['treecorr']
@@ -83,7 +89,7 @@ def main():
     # est_corrfunc, wprp_corrfunc = run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo,
     #                             weights_data=weights_data, weights_rand=weights_rand, nopi=True)
     est_corrfunc, wprp_corrfunc = run_corrfunc(data1, rand1, data2, rand2,
-                                               rpbins, pimax, cosmo, nopi=True)
+                                               rpbins, pimax, cosmo, pibinwidth=pimax)
     print wprp_corrfunc
     end = time.time()
     print 'Time corrfunc: {:3f} s'.format(end-start)
@@ -166,24 +172,49 @@ def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
 
     return rps, wprps
 
+
+def bins_logavg(bins):
+    logbins = np.log10(bins)
+    logbins_avg =  0.5 * (logbins[1:] + logbins[:-1])
+    avg_bins = 10**logbins_avg
+    return avg_bins
+
+def logbins_avg(bins):
+    logbins = np.log10(bins)
+    logbinsavg =  0.5 * (logbins[1:] + logbins[:-1])
+    return logbinsavg
+
+def log_width(bins):
+    K = len(bins)-1
+    return (np.log10(max(bins)) - np.log10(min(bins)))/float(K)
+
 def calc_wprp(a, basisfunc, K, rpbins, vals, *args):
 
     #x = np.logspace(np.log10(min(rpbins)), np.log10(max(rpbins)), 500)
-    x = 0.5*np.array(rpbins[1:]+rpbins[:-1])
+    x = bins_logavg(rpbins)
+    #x = 0.5*np.array(rpbins[1:]+rpbins[:-1])
 
     rps = []
     wprps = []
     print 'WPRP'
     for bb in range(len(basisfunc)):
-        for val in vals:
-            bases = basisfunc[bb](None, None, None, None, x, *args, val=val)
-            #xi_rp = np.zeros_like(x)
-            #for k in range(len(bases)):
-            #    xi_rp += a[bb][k]*ba.arrayses[k]
+
+        if vals==None:
+            bases = basisfunc[bb](None, None, None, None, x, *args)
             xi_rp = np.matmul(a[bb], bases)
             xi_rp = np.squeeze(np.asarray(xi_rp))
             rps.append(x)
-            wprps.append(list(2*xi_rp))
+            wprps.append(list(2 * xi_rp))
+        else:
+            for val in vals:
+                bases = basisfunc[bb](None, None, None, None, x, *args, val=val)
+                #xi_rp = np.zeros_like(x)
+                #for k in range(len(bases)):
+                #    xi_rp += a[bb][k]*ba.arrayses[k]
+                xi_rp = np.matmul(a[bb], bases)
+                xi_rp = np.squeeze(np.asarray(xi_rp))
+                rps.append(x)
+                wprps.append(list(2*xi_rp))
     return rps, wprps
 
 def calc_wprp_orig(a, basisfunc, K, rpbins, *args):
@@ -198,7 +229,7 @@ def calc_wprp_orig(a, basisfunc, K, rpbins, *args):
 
 
 def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo, weights_data=None,
-                 weights_rand=None, nopi=False, pibinwidth=1):
+                 weights_rand=None, pibinwidth=1):
     print 'Running corrfunc'
     #can only do autocorrelations right now
     dd, dr, rr = corrfunc.counts(data1['ra'].values, data1['dec'].values, data1['z'].values,

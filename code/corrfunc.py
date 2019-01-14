@@ -76,6 +76,7 @@ def calc_wprp(dd, dr, rr, ndata, nrand, pibinwidth=1):
     assert pibinwidth >= 1
     assert len(dd)%float(pibinwidth) == 0
 
+    print dd
     print np.sum(dd, axis=0)
 
     #reshape into different bin widths
@@ -83,6 +84,7 @@ def calc_wprp(dd, dr, rr, ndata, nrand, pibinwidth=1):
     dr = dr.reshape(-1, pibinwidth, dr.shape[-1]).sum(axis=1)
     rr = rr.reshape(-1, pibinwidth, rr.shape[-1]).sum(axis=1)
 
+    print dd
     est_ls = calc_ls(dd, dr, rr, ndata, nrand)
     wprp = 2*np.sum(est_ls, axis=0)
 

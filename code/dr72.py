@@ -23,8 +23,8 @@ c_kms = 3.e5  # c in km/s
 
 
 def main():
-    #samples_czcut()
-    run_dr72()
+    samples_czcut()
+    #run_dr72()
     #check_samples()
 
 def run_dr72():
@@ -70,7 +70,7 @@ def run_bins(min_sep, max_sep, bin_size, wp, saveto=None):
     cosmo = LambdaCDM(H0=70, Om0=0.25, Ob0=0.045, Ode0=0.75) 
     K = (np.log10(max_sep) - np.log10(min_sep))/bin_size
     rpbins = np.logspace(np.log(min_sep), np.log(max_sep), K+1, base=np.e)
-    rpbins_avg = 0.5 * (rpbins[1:] + rpbins[:-1])
+    rpbins_avg = run.bins_logavg(rpbins)
     rps = [rpbins_avg]*len(samplenums)
     pibinwidth = 2 #Mpc/h
     wprps = []
@@ -104,9 +104,8 @@ def run_together(min_sep, max_sep, bin_size, K, pimax, wp):
     print 'ndata={}, nrand={}'.format(len(data1.index), len(rand1.index))
 
     rpbins = np.logspace(np.log10(min_sep), np.log10(max_sep), K+1)
-    rpbins_avg = 0.5 * (rpbins[1:] + rpbins[:-1])
-    logrpbins_avg = np.log10(rpbins_avg)
-    logwidth = np.log10(rpbins_avg[1]) - np.log10(rpbins_avg[0])
+    rpbins_avg = run.bins_logavg(rpbins)
+    logwidth = run.log_width(rpbins)
 
     #basisfuncs = [estimator.top_z]
     #basisfuncs = [estimator.top_Mr]

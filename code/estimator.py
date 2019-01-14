@@ -156,6 +156,17 @@ def tophat(cat1, cat2, i, j, rp, logbins_avg, logwidth):
     u = np.array([top(logrp, peak, logwidth) for peak in logbins_avg])
     return u
 
+def tophat_fast(cat1, cat2, i, j, rp, logbins, logwidth):
+    #print logbins
+    #print rp
+    ins = int((np.log10(rp) - min(logbins)) / logwidth)
+    #print ins
+    #print
+    u = np.zeros(len(logbins)-1)
+    if ins>=0 and ins<len(logbins)-1:
+        u[ins] = 1
+    return u
+
 #def quad(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None)
 
 def top_z(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):

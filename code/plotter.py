@@ -11,9 +11,19 @@ color_dict = {'corrfunc':'grey', 'tophat':'blue', 'piecewise':'red',
 color_list = ['red', 'orange', 'green', 'blue', 'cyan', 'magenta']
 
 def main():
-    fn = "../results/dr72_bins_frac0.05.npy"
+    rps = []
+    wprps = []
+    labels = []
+    #samplenums = [7,8,9,10,11,12]
+    #fns = ["../results/dr72_bin{}_all.npy".format(samplenum) for samplenum in samplenums]
+    fns = ['../results/dr72_bin7_all.npy', '../results/dr72_bin7_weights1.npy']
+    for fn in fns:
 
-    rps, wprps, labels = run.load_results(fn)
+        #fn = '../results/dr72_bin8_frac0.05_try4.npy'
+        rp, wprp, label = run.load_results(fn)
+        rps.append(rp[0])
+        wprps.append(wprp[0])
+        labels.append(label[0])
     plot_wprp(rps, wprps, labels)
 
 def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None):
@@ -42,6 +52,8 @@ def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None):
         ax0.loglog(rp, wprp, label=label, color=color, marker='o')
 
         plt.xlabel(r'$r_p$ (Mpc/h)')
+        plt.xlim(0.1, 40.)
+        ax0.set_ylim(1, 2000)
         ax0.set_ylabel(r'$w_p$($r_p$)')
 
         ax0.legend(loc='best')
