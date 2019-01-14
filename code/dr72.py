@@ -30,8 +30,8 @@ def main():
 def run_dr72():
 
     #Separations should be given in Mpc/h
-    min_sep = 0.13
-    max_sep = 40. #Mpc/h
+    min_sep = 0.1
+    max_sep = 50. #Mpc/h
     #K = 12
     #bin_size_treecorr = np.log(max_sep / min_sep) / float(K)
     bin_size = 0.2
@@ -61,15 +61,15 @@ def check_samples():
         # so the given data['M_r'] has already been evolution corrected i think?
 
 def run_bins(min_sep, max_sep, bin_size, wp, saveto=None):
-    samplenums = [7, 8, 9, 10, 11, 12]
+    #samplenums = [7, 8, 9, 10, 11, 12]
     #samplenums = [9,10]
-    #samplenums = [7]
+    samplenums = [11]
 
     #samplenums = []
-    saveto = "../results/dr72_bins_frac0.05.npy"
+    saveto = "../results/dr72_bins11_rmin0.1_rmax50.npy"
     cosmo = LambdaCDM(H0=70, Om0=0.25, Ob0=0.045, Ode0=0.75) 
     K = (np.log10(max_sep) - np.log10(min_sep))/bin_size
-    rpbins = np.logspace(np.log(min_sep), np.log(max_sep), K+1, base=np.e)
+    rpbins = np.logspace(np.log10(min_sep), np.log10(max_sep), K+1)
     rpbins_avg = run.bins_logavg(rpbins)
     rps = [rpbins_avg]*len(samplenums)
     pibinwidth = 2 #Mpc/h
