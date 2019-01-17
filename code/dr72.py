@@ -23,9 +23,10 @@ c_kms = 3.e5  # c in km/s
 
 
 def main():
-    samples_czcut()
+    #samples_czcut()
     #run_dr72()
     #check_samples()
+    run_dr7_LRGs()
 
 def run_dr72():
 
@@ -40,6 +41,65 @@ def run_dr72():
     print 'Running'
     run_bins(min_sep, max_sep, bin_size, wp)
     #run_together(min_sep, max_sep, bin_size, K, pimax, wp)
+
+
+def run_dr7_LRGs():
+
+    sample = 'Full'
+    #sample = 'Bright-no'
+    datafn = '../data/DR7-{}.ascii'.format(sample)
+    randfn = '../data/random-DR7-{}.ascii'.format(sample)
+    data = pd.read_table(datafn, index_col=False, delim_whitespace=True, names=['ra', 'dec', 'z',
+            'M_g', 'sector_completeness', 'n(z)*1e4', 'radial_weight', 'fiber_coll_weight',
+            'fogtmain', 'ilss', 'icomb', 'sector'], dtype={'z':np.float64}, skiprows=1)
+    rand = pd.read_table(randfn, index_col=False,  delim_whitespace=True, names=['ra', 'dec', 'z',
+            'sector_completeness', 'n(z)*1e4', 'radial_weight', 'ilss', 'sector'], dtype={'z':np.float64},
+             skiprows=1)
+
+    frac = 0.05
+    saveto = "../results/dr7_{}LRG_frac{}_weights.npy".format(sample, frac)
+    cosmo = LambdaCDM(H0=70, Om0=0.25,Ode0=0.75)
+
+    print 'ndata=', len(data.index)
+    print 'nrand=', len(rand.index)
+    #Sector completeness already cut to >0.6, not sure if still have to downsample randoms
+    #and many have sector completness > 1!! ??
+    data = data.sample(frac=frac)
+    rand = rand.sample(frac=frac)
+    # data1 = data1[:int(frac*len(data1.index))]
+    # rand1 = rand1[:int(frac*len(rand1.index))]
+    print 'ndata=', len(data.index)
+    print 'nrand=', len(rand.index)
+
+    weights_data = data['radial_weight']*data['fiber_coll_weight']
+    weights_rand = rand['radial_weight']
+
+    mumax = 1.0
+    if sample=='Bright':
+        K = 21
+        rmin = 60
+        rmax = 200
+    elif sample=='Full':
+        K = 14
+        rmin = 40
+        rmax = 180
+    else:
+        exit('ERROR')
+    sbins = np.linspace(rmin, rmax, K + 1)
+
+    start = time.time()
+    s, xi = run.run_corrfunc(data, rand, data, rand, sbins, mumax, cosmo,
+                                    weights_data=weights_data, weights_rand=weights_rand, zspace=True)
+    end = time.time()
+    print 'Time for dr7 {} LRGs, ndata={}: {}'.format(sample, len(data.index), end-start)
+
+    ss = [s]
+    xis = [xi]
+    labels = ['dr7 {} LRGs'.format(sample)]
+    if saveto:
+        run.save_results(saveto, ss, xis, labels)
+    #plotter.plot_xi_zspace(ss, xis, labels)
+
 
 def check_samples():
     samplenums = [7, 8, 9, 10, 11, 12]
@@ -66,12 +126,13 @@ def run_bins(min_sep, max_sep, bin_size, wp, saveto=None):
     samplenums = [11]
 
     #samplenums = []
-    saveto = "../results/dr72_bins11_rmin0.1_rmax50.npy"
+    saveto = "../results/dr72_bin11_rmin0.1_rmax50.npy"
     cosmo = LambdaCDM(H0=70, Om0=0.25, Ob0=0.045, Ode0=0.75) 
     K = (np.log10(max_sep) - np.log10(min_sep))/bin_size
     rpbins = np.logspace(np.log10(min_sep), np.log10(max_sep), K+1)
     rpbins_avg = run.bins_logavg(rpbins)
-    rps = [rpbins_avg]*len(samplenums)
+    #rps = [rpbins_avg]*len(samplenums)
+    rps = []
     pibinwidth = 2 #Mpc/h
     wprps = []
     labels = []
@@ -82,10 +143,11 @@ def run_bins(min_sep, max_sep, bin_size, wp, saveto=None):
         else:
             labels.append(samplenum)
         pimax = pimaxs[samplenum]
-        xi = run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo, pibinwidth=pibinwidth)
+        rp_avg, wprp = run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo, pibinwidth=pibinwidth)
         print samplenum
-        print xi
-        wprps.append(xi) #*2?
+        print wprp
+        rps.append(rp_avg)
+        wprps.append(wprp)
         cols.append(colors[samplenum])
 
     if saveto:
@@ -194,14 +256,14 @@ def run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo, bin_size=N
     #xi, dd, dr, rd, rr = run.run_treecorr_orig(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp)
     weights_data = data1['fgotten']
     weights_rand = rand1['fgotten']
-    est_ls, wprp = run.run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo,
+    rp_avg, est_ls, wprp = run.run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo,
                                     weights_data=weights_data, weights_rand=weights_rand,
                                     pibinwidth=pibinwidth)
 
     end = time.time()
     print 'Time for sample {}, ndata={}: {}'.format(
         samplenum, len(data1.index), end-start)
-    return wprp
+    return rp_avg, wprp
 
 
 def get_random(samplenum):

@@ -1,13 +1,11 @@
 import numpy as np
-
+import multiprocessing as mp
 
 
 
 def est(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs, data1, rand1, data2, rand2,
         pimax, rmax, cosmo, basisfunc, K, wp, *args):
 
-    # should these be just the number of pairs within bounds not total data and rands???
-    # mm no because they are tied to the catalogs not the pairs
     nd1 = len(data1)
     nr1 = len(rand1)
     nd2 = len(data2)
@@ -42,16 +40,49 @@ def est(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs, data1, rand1, data2, rand2,
         rd = rds[bb] * 1./(nd2*nr1)
         rr = rrs[bb] * 1./(nr1*nr2)
         qq = qqs[bb] * 1./(nr1*nr2)
-        print 'trythis'
-        print dd
-        print dr
-        print rr
-        print (dd-2*dr+rr)/rr
         a.append(calc_amplitudes(dd, dr, rd, rr, qq))
-        print a
     print 'Computed amplitudes'
 
     return a
+
+
+def est_multi(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs, data1, rand1, data2, rand2,
+        pimax, rmax, cosmo, basisfunc, K, wp, *args):
+
+    nd1 = len(data1)
+    nr1 = len(rand1)
+    nd2 = len(data2)
+    nr2 = len(rand2)
+
+    print 'Calculating dd vector'
+    print args
+
+    nproc = 2
+    pool = mp.Pool(processes=nproc)
+
+    chunksize = int(len(d1d2pairs)/nproc)
+
+    results = [pool.apply_async(project_pairs, args=(d1d2pairs, data1, data2, pimax, rmax,
+                                      cosmo, basisfunc, K, wp, False, args[0], args[1])) for _ in range(nproc)]
+    output = [p.get() for p in results]
+
+    for b in range(len(basisfunc)):
+        dd_multi = np.zeros(K)
+        for out in output:
+            dd_multi += out[b]
+        print dd_multi
+
+    print "One shot"
+    dds = project_pairs(d1d2pairs, data1, data2, pimax, rmax,
+                                      cosmo, basisfunc, K, wp, False, *args)
+    print dds
+
+    return a
+
+
+def split(a, n):
+    k, m = divmod(len(a), n)
+    return list((a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in xrange(n)))
 
 
 def calc_amplitudes(dd, dr, rd, rr, qq):

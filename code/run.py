@@ -6,6 +6,7 @@ import time
 
 import treecorr
 import corrfunc
+from Corrfunc.utils import convert_3d_counts_to_cf
 
 import pairs
 import estimator
@@ -17,9 +18,9 @@ funcs = {'tophat': estimator.tophat, 'tophat_orig': estimator.tophat,
 
 def main():
 
-    #nd = 10
+    nd = 10
     #nd = 31
-    nd = 102
+    #nd = 102
     #nd = 307
     #nd = 3158
     #nd = 10015
@@ -30,11 +31,11 @@ def main():
 
     print 'Running for n_data={}'.format(nd)
 
-    K = 8
+    K = 12
     #Separations should be given in Mpc/h
     pimax = 40 #Mpc/h
-    rpmin = 0.5
-    rpmax = 10. #Mpc/h
+    rpmin = 0.1
+    rpmax = 40. #Mpc/h
     bin_sep = np.log(rpmax / rpmin) / float(K) #natural log as treecorr expects
 
 
@@ -83,16 +84,24 @@ def main():
     #labels += ['tophat_orig']
     #labels += ['treecorr']
 
+    wprps = []
+    rps = []
+    labels = []
     start = time.time()
     # weights_data = np.full(len(data1.index), 1.0)
     # weights_rand = np.full(len(rand1.index), 1.0)
     # est_corrfunc, wprp_corrfunc = run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo,
     #                             weights_data=weights_data, weights_rand=weights_rand, nopi=True)
-    est_corrfunc, wprp_corrfunc = run_corrfunc(data1, rand1, data2, rand2,
+    rp_avg, est_corrfunc, wprp_corrfunc = run_corrfunc(data1, rand1, data2, rand2,
                                                rpbins, pimax, cosmo, pibinwidth=pimax)
     print wprp_corrfunc
     end = time.time()
     print 'Time corrfunc: {:3f} s'.format(end-start)
+    #rps.append(rpbins_avg)
+    rps.append(rp_avg)
+    wprps.append(wprp_corrfunc)
+    labels.append('corrfunc rp avg')
+
     rps.append(rpbins_avg)
     wprps.append(wprp_corrfunc)
     labels.append('corrfunc')
@@ -109,7 +118,7 @@ def main():
     print len(rps)
     print labels
     colors = ['purple', 'red', 'orange', 'yellow', 'green', 'blue', 'cyan', 'magenta', 'grey']
-    plotter.plot_wprp(rps, wprps, labels, colors=colors, wp_tocompare='corrfunc')
+    plotter.plot_wprp(rps, wprps, labels, colors=colors, wp_tocompare=None)
 
 
 
@@ -143,8 +152,14 @@ def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
     print 'Est'
     if type(basisfuncs)!=list:
         basisfuncs = [basisfuncs]
-    a = estimator.est(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs,
-                      data1, rand1, data2, rand2, pimax, rmax, cosmo, basisfuncs, K, wp, *args)
+
+    multi=True
+    if multi:
+        a = estimator.est_multi(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs,
+                          data1, rand1, data2, rand2, pimax, rmax, cosmo, basisfuncs, K, wp, *args)
+    else:
+        a = estimator.est(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs,
+                          data1, rand1, data2, rand2, pimax, rmax, cosmo, basisfuncs, K, wp, *args)
 
     # TODO: change for not projected? look at corrfunc
 
@@ -229,26 +244,29 @@ def calc_wprp_orig(a, basisfunc, K, rpbins, *args):
 
 
 def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo, weights_data=None,
-                 weights_rand=None, pibinwidth=1):
+                 weights_rand=None, pibinwidth=1, zspace=False):
     print 'Running corrfunc'
     #can only do autocorrelations right now
-    dd, dr, rr = corrfunc.counts(data1['ra'].values, data1['dec'].values, data1['z'].values,
-                    rand1['ra'].values, rand1['dec'].values, rand1['z'].values, rpbins, pimax,
-                    cosmo,  weights_data=weights_data, weights_rand=weights_rand, comoving=True)
 
-    # dd = np.sum(dd, axis=0)
-    # dr = np.sum(dr, axis=0)
-    # rr = np.sum(rr, axis=0)
 
-    #if nopi:
-    #    est_ls, wprp = corrfunc.calc_wprp_nopi(dd, dr, rr, len(data1), len(rand1))
-    #else:
-    est_ls, wprp = corrfunc.calc_wprp(dd, dr, rr, len(data1), len(rand1), pibinwidth=pibinwidth)
-    # nd = float(len(data1['ra'].values))
-    # nr = float(len(rand1['ra'].values))
-    # wprp = (dd*(nr/nd)*(nr/nd) - 2*dr*(nr/nd) + rr)/rr
+    ndata = len(data1.index)
+    nrand = len(rand1.index)
 
-    return est_ls, wprp
+    if zspace:
+        dd, dr, rr = corrfunc.counts(data1['ra'].values, data1['dec'].values, data1['z'].values,
+                                     rand1['ra'].values, rand1['dec'].values, rand1['z'].values, rpbins, pimax,
+                                     cosmo, weights_data=weights_data, weights_rand=weights_rand, comoving=True, zspace=True)
+        xi = convert_3d_counts_to_cf(ndata, ndata, nrand, nrand, dd, dr, dr, rr)
+        rp_avg = 0.5*(rpbins[1:]+rpbins[:-1])
+        return rp_avg, xi
+    else:
+        dd, dr, rr, rp_avg = corrfunc.counts(data1['ra'].values, data1['dec'].values, data1['z'].values,
+                                             rand1['ra'].values, rand1['dec'].values, rand1['z'].values, rpbins, pimax,
+                                             cosmo, weights_data=weights_data, weights_rand=weights_rand, comoving=True)
+        est_ls, wprp = corrfunc.calc_wprp(dd, dr, rr, len(data1), len(rand1), pibinwidth=pibinwidth)
+        return rp_avg, est_ls, wprp
+
+
 
 
 def run_treecorr(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp):
