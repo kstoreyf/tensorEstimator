@@ -11,11 +11,12 @@ color_dict = {'corrfunc':'grey', 'tophat':'blue', 'piecewise':'red',
 color_list = ['red', 'orange', 'green', 'blue', 'cyan', 'magenta']
 
 def main():
-    #plot_dr72bins()
-    plot()
+    plot_dr72bins()
+    #plot()
 
 def plot():
-    fn = "../results/dr72_brightLRG_frac0.1.npy"
+    #fn = "../results/dr72_brightLRG_frac0.1.npy"
+    fn = "../results/dr7_FullLRG_frac1_weights.npy"
     ss, xis, labels = run.load_results(fn)
     print ss
     print xis
@@ -28,9 +29,11 @@ def plot_dr72bins():
     wprps = []
     labels = []
     #samplenums = [7,8,9,10,11,12]
-    samplenums = [7,8,9,10,11]
+    #samplenums = [7,8,9,10,11]
+    fns = ["../results/dr72_bin11_frac0.1_pi1.npy", "../results/dr72_bin11_frac0.1_pi2.npy",
+           "../results/dr72_bin11_frac0.1_pi2bad.npy"]#], "../results/dr72_bin11_frac0.1_pi1corrfunc.npy",]
     #fns = ["../results/dr72_bin{}_rmin0.1_rmax50.npy".format(samplenum) for samplenum in samplenums]
-    fns = ['../results/dr72_bin11_all.npy', '../results/dr72_bin11_lsno2.npy']
+    #fns = ['../results/dr72_bin11_all.npy', '../results/dr72_bin11_lsno2.npy']
     #fns = ["../results/dr72_bin{}_all.npy".format(samplenum) for samplenum in samplenums]
     #fns = ['../results/dr72_bin7_all.npy', '../results/dr72_bin7_weights1.npy']
     #fns = ['../results/dr72_bin11_all.npy', '../results/dr72_bin11_rmin0.1.npy',

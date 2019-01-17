@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from Corrfunc.mocks.DDrppi_mocks import DDrppi_mocks
 from Corrfunc.mocks.DDsmu_mocks import DDsmu_mocks
+from Corrfunc.utils import convert_rp_pi_counts_to_wp
 
 from astropy.cosmology import LambdaCDM
 
@@ -89,7 +90,10 @@ def counts(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins, pimax,
         for n in range(len(rpbins) - 1):
             rp_avg[n] /= 3*(len(pibins)-1)
 
-        return dd_rp_pi_corrfunc, dr_rp_pi_corrfunc, rr_rp_pi_corrfunc, rp_avg
+        wprp = convert_rp_pi_counts_to_wp(ndata, ndata, nrand, nrand, dd_res_corrfunc, dr_res_corrfunc,
+                                 dr_res_corrfunc, rr_res_corrfunc, len(rpbins)-1, pimax, dpi=pibinwidth)
+
+        return dd_rp_pi_corrfunc, dr_rp_pi_corrfunc, rr_rp_pi_corrfunc, rp_avg, wprp
 
 
 def calc_wprp(dd, dr, rr, ndata, nrand, pibinwidth=1):
@@ -104,7 +108,8 @@ def calc_wprp(dd, dr, rr, ndata, nrand, pibinwidth=1):
     rr = rr.reshape(-1, pibinwidth, rr.shape[-1]).sum(axis=1)
 
     est_ls = calc_ls(dd, dr, rr, ndata, nrand)
-    wprp = 2*np.sum(est_ls, axis=0)
+    wprp = 2*pibinwidth*np.sum(est_ls, axis=0)
+    #wprp = 2*np.sum(est_ls, axis=0)
 
     return est_ls, wprp
 

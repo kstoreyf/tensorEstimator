@@ -24,15 +24,15 @@ c_kms = 3.e5  # c in km/s
 
 def main():
     #samples_czcut()
-    #run_dr72()
+    run_dr72()
     #check_samples()
-    run_dr7_LRGs()
+    #run_dr7_LRGs()
 
 def run_dr72():
 
     #Separations should be given in Mpc/h
-    min_sep = 0.1
-    max_sep = 50. #Mpc/h
+    min_sep = 0.13
+    max_sep = 40. #Mpc/h
     #K = 12
     #bin_size_treecorr = np.log(max_sep / min_sep) / float(K)
     bin_size = 0.2
@@ -126,14 +126,15 @@ def run_bins(min_sep, max_sep, bin_size, wp, saveto=None):
     samplenums = [11]
 
     #samplenums = []
-    saveto = "../results/dr72_bin11_rmin0.1_rmax50.npy"
+    saveto = "../results/dr72_bin11_frac0.1_pi1corrfunc.npy"
+
     cosmo = LambdaCDM(H0=70, Om0=0.25, Ob0=0.045, Ode0=0.75) 
     K = (np.log10(max_sep) - np.log10(min_sep))/bin_size
     rpbins = np.logspace(np.log10(min_sep), np.log10(max_sep), K+1)
     rpbins_avg = run.bins_logavg(rpbins)
     #rps = [rpbins_avg]*len(samplenums)
     rps = []
-    pibinwidth = 2 #Mpc/h
+    pibinwidth = 1 #Mpc/h
     wprps = []
     labels = []
     cols = []
@@ -202,7 +203,6 @@ def run_together(min_sep, max_sep, bin_size, K, pimax, wp):
 
 
 
-
 def combine_samples(samplenums):
     datas = []
     rands = []
@@ -239,7 +239,7 @@ def run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo, bin_size=N
     print 'ndata=', len(data1.index)
     print 'nrand=', len(rand1.index)
 
-    frac = 0.05
+    frac = 0.1
     data1 = data1.sample(frac=frac)
     rand1 = rand1.sample(frac=frac)
     # data1 = data1[:int(frac*len(data1.index))]
