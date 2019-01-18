@@ -11,30 +11,37 @@ color_dict = {'corrfunc':'grey', 'tophat':'blue', 'piecewise':'red',
 color_list = ['red', 'orange', 'green', 'blue', 'cyan', 'magenta']
 
 def main():
-    plot_dr72bins()
-    #plot()
+    #plot_dr72bins()
+    plot()
 
 def plot():
     #fn = "../results/dr72_brightLRG_frac0.1.npy"
-    fn = "../results/dr7_FullLRG_frac1_weights.npy"
-    ss, xis, labels = run.load_results(fn)
-    print ss
-    print xis
-    print labels
-    plot_xi_zspace(ss, xis, labels)
+    # fn = "../results/dr7_FullLRG_frac1_weights.npy"
+    # ss, xis, labels = run.load_results(fn)
+    # plot_xi_zspace(ss, xis, labels)
+
+    sample = 'Dim-no'
+    frac = 0.1
+    #fn = "../results/wp_dr7_{}LRG_frac{}_weights.npy".format(sample, frac)
+    fn = "../results/dr72_bin{}_frac{}_randcz.npy".format(20, frac)
+    rps, wps, labels = run.load_results(fn)
+    print rps
+    print wps
+    rps_paper = [[0.17, 0.27, 0.42, 0.67, 1.1, 1.7, 2.7, 4.2, 6.7, 10.6, 16.9, 26.8]]
+    plot_wprp(rps_paper, wps, labels)
 
 
 def plot_dr72bins():
     rps = []
     wprps = []
     labels = []
-    #samplenums = [7,8,9,10,11,12]
+    samplenums = [7,8,9,10,11,12]
     #samplenums = [7,8,9,10,11]
-    fns = ["../results/dr72_bin11_frac0.1_pi1.npy", "../results/dr72_bin11_frac0.1_pi2.npy",
-           "../results/dr72_bin11_frac0.1_pi2bad.npy"]#], "../results/dr72_bin11_frac0.1_pi1corrfunc.npy",]
+    #fns = ["../results/dr72_bin11_all.npy", "../results/dr72_bin11_pi2.npy"]
+         #  "../results/dr72_bin11_pi1.npy", "../results/dr72_bin11_pi1corrfunc.npy"]
     #fns = ["../results/dr72_bin{}_rmin0.1_rmax50.npy".format(samplenum) for samplenum in samplenums]
     #fns = ['../results/dr72_bin11_all.npy', '../results/dr72_bin11_lsno2.npy']
-    #fns = ["../results/dr72_bin{}_all.npy".format(samplenum) for samplenum in samplenums]
+    fns = ["../results/dr72_bin{}_all.npy".format(samplenum) for samplenum in samplenums]
     #fns = ['../results/dr72_bin7_all.npy', '../results/dr72_bin7_weights1.npy']
     #fns = ['../results/dr72_bin11_all.npy', '../results/dr72_bin11_rmin0.1.npy',
     #       '../results/dr72_bin11_rmin0.1_rmax50.npy', '../results/dr72_bin11_H0-100_Om0-0.3.npy']
@@ -43,6 +50,7 @@ def plot_dr72bins():
 
         #fn = '../results/dr72_bin8_frac0.05_try4.npy'
         rp, wprp, label = run.load_results(fn)
+        print wprp
         #rps.append(rp[0])
         rps_paper = [0.17,0.27,0.42,0.67,1.1,1.7,2.7,4.2,6.7,10.6,16.9,26.8]
         rps_paper_all = [0.17,0.27,0.42,0.67,1.1,1.7,2.7,4.2,6.7,10.6,16.9,26.8,42.3]
@@ -63,10 +71,10 @@ def plot_dr72bins():
 
 
 def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None):
-    if np.array(rps).ndim==1:
-        rps = [rps]
-        wprps = [wprps]
-        labels = [labels]
+    # if np.array(rps).ndim==1:
+    #     rps = [rps]
+    #     wprps = [wprps]
+    #     labels = [labels]
 
     if wp_tocompare:
         compidx = labels.index(wp_tocompare)
@@ -140,7 +148,7 @@ def plot_xi_zspace(ss, xis, labels, colors=None, xi_tocompare=None):
 
         ax0.plot(s, xi, label=label, color=color, marker='o')
 
-        plt.xlabel(r'$s$ (Mpc/h)')
+        #plt.xlabel(r'$s$ (Mpc/h)')
         #ax0.set_ylim(-0.005, 0.025)
         #plt.xlim(60, 210)
         ax0.set_ylabel(r'$\xi(s)$')

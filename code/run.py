@@ -261,12 +261,12 @@ def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo, weights_data=
         rp_avg = 0.5*(rpbins[1:]+rpbins[:-1])
         return rp_avg, xi
     else:
-        dd, dr, rr, rp_avg, wprp = corrfunc.counts(data1['ra'].values, data1['dec'].values, data1['z'].values,
+        dd, dr, rr, rp_avg = corrfunc.counts(data1['ra'].values, data1['dec'].values, data1['z'].values,
                                              rand1['ra'].values, rand1['dec'].values, rand1['z'].values, rpbins, pimax,
                                              cosmo, weights_data=weights_data, weights_rand=weights_rand, comoving=True)
-        #est_ls, wprp = corrfunc.calc_wprp(dd, dr, rr, len(data1), len(rand1), pibinwidth=pibinwidth)
-        est_ls = None
-        return rp_avg, est_ls, wprp
+        est_ls, wprp = corrfunc.calc_wprp(dd, dr, rr, len(data1), len(rand1), pibinwidth=pibinwidth)
+        #est_ls = None
+        return rp_avg, wprp
 
 
 

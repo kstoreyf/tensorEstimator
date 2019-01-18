@@ -90,10 +90,13 @@ def counts(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins, pimax,
         for n in range(len(rpbins) - 1):
             rp_avg[n] /= 3*(len(pibins)-1)
 
-        wprp = convert_rp_pi_counts_to_wp(ndata, ndata, nrand, nrand, dd_res_corrfunc, dr_res_corrfunc,
-                                 dr_res_corrfunc, rr_res_corrfunc, len(rpbins)-1, pimax, dpi=pibinwidth)
+        # wprp = convert_rp_pi_counts_to_wp(ndata, ndata, nrand, nrand, dd_res_corrfunc, dr_res_corrfunc,
+        #                          dr_res_corrfunc, rr_res_corrfunc, len(rpbins)-1, pimax, dpi=pibinwidth)
 
-        return dd_rp_pi_corrfunc, dr_rp_pi_corrfunc, rr_rp_pi_corrfunc, rp_avg, wprp
+        np.save('../results/counts_bin20_frac0.1_randcz.npy',
+               [dd_res_corrfunc, dr_res_corrfunc, rr_res_corrfunc])
+
+        return dd_rp_pi_corrfunc, dr_rp_pi_corrfunc, rr_rp_pi_corrfunc, rp_avg
 
 
 def calc_wprp(dd, dr, rr, ndata, nrand, pibinwidth=1):
