@@ -19,10 +19,11 @@ funcs = {'tophat': estimator.tophat, 'tophat_orig': estimator.tophat,
 
 def main():
 
-    nd = 10
+    #nd = 10
     #nd = 31
-    #nd = 102
+    nd = 102
     #nd = 307
+    #nd = 1012
     #nd = 3158
     #nd = 10015
     data1fn = '../../lss/mangler/samples/a0.6452_0001.v5_ngc_ifield_ndata{}.rdzw'.format(nd)
@@ -85,27 +86,27 @@ def main():
     #labels += ['tophat_orig']
     #labels += ['treecorr']
 
-    wprps = []
-    rps = []
-    labels = []
-    start = time.time()
+    # wprps = []
+    # rps = []
+    # labels = []
+    # start = time.time()
     # weights_data = np.full(len(data1.index), 1.0)
     # weights_rand = np.full(len(rand1.index), 1.0)
     # est_corrfunc, wprp_corrfunc = run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo,
     #                             weights_data=weights_data, weights_rand=weights_rand, nopi=True)
-    rp_avg, est_corrfunc, wprp_corrfunc = run_corrfunc(data1, rand1, data2, rand2,
-                                               rpbins, pimax, cosmo, pibinwidth=pimax)
-    print wprp_corrfunc
-    end = time.time()
-    print 'Time corrfunc: {:3f} s'.format(end-start)
-    #rps.append(rpbins_avg)
-    rps.append(rp_avg)
-    wprps.append(wprp_corrfunc)
-    labels.append('corrfunc rp avg')
-
-    rps.append(rpbins_avg)
-    wprps.append(wprp_corrfunc)
-    labels.append('corrfunc')
+    # rp_avg, est_corrfunc, wprp_corrfunc = run_corrfunc(data1, rand1, data2, rand2,
+    #                                            rpbins, pimax, cosmo, pibinwidth=pimax)
+    # print wprp_corrfunc
+    # end = time.time()
+    # print 'Time corrfunc: {:3f} s'.format(end-start)
+    # #rps.append(rpbins_avg)
+    # rps.append(rp_avg)
+    # wprps.append(wprp_corrfunc)
+    # labels.append('corrfunc rp avg')
+    #
+    # rps.append(rpbins_avg)
+    # wprps.append(wprp_corrfunc)
+    # labels.append('corrfunc')
 
     # xi_tree = run_treecorr(data1, rand1, data1, rand1, rpmin, rpmax, bin_sep, pimax, wp)
     # rps.append(rpbins_avg)
@@ -174,6 +175,7 @@ def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
     print 'wprp!'
     rps, wprps = calc_wprp(a, basisfuncs, K, rpbins, vals, *args)
 
+
     # just tophat orig
     #rps_orig, wprps_orig = calc_wprp_orig(a, [basisfunc[0]], K, rpbins, *args)
     #print wprps
@@ -206,6 +208,7 @@ def log_width(bins):
 
 def calc_wprp(a, basisfunc, K, rpbins, vals, *args):
 
+    print a
     #x = np.logspace(np.log10(min(rpbins)), np.log10(max(rpbins)), 500)
     x = bins_logavg(rpbins)
     #x = 0.5*np.array(rpbins[1:]+rpbins[:-1])
@@ -231,6 +234,8 @@ def calc_wprp(a, basisfunc, K, rpbins, vals, *args):
                 xi_rp = np.squeeze(np.asarray(xi_rp))
                 rps.append(x)
                 wprps.append(list(2*xi_rp))
+    print rps
+    print wprps
     return rps, wprps
 
 def calc_wprp_orig(a, basisfunc, K, rpbins, *args):

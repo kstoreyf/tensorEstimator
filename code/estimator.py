@@ -1,5 +1,6 @@
 import numpy as np
 import multiprocessing as mp
+import time
 
 
 
@@ -13,23 +14,23 @@ def est(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs, data1, rand1, data2, rand2,
 
     print 'Calculating dd vector'
     dds = project_pairs(d1d2pairs, data1, data2, pimax, rmax,
-                                      cosmo, basisfunc, K, wp, False, *args)
+                                      cosmo, basisfunc, K, wp, False, None, *args)
     print dds
     # is d1 r2 right? cross?
     print 'Calculating dr vector'
 
     drs = project_pairs(d1r2pairs, data1, rand2, pimax, rmax,
-                                      cosmo, basisfunc, K, wp, False, *args)
+                                      cosmo, basisfunc, K, wp, False, None, *args)
     print drs
 
     print 'Calculating rd vector'
     # should check if need to compute both aka if d1==d2 (drs and rds should be same bc using symmetric defs of dcm)
     rds = project_pairs(d2r1pairs, data2, rand1, pimax, rmax,
-                                      cosmo, basisfunc, K, wp, False, *args)
+                                      cosmo, basisfunc, K, wp, False, None, *args)
     print 'Calculating rr vector'
 
     rrs, qqs = project_pairs(r1r2pairs, rand1, rand2, pimax, rmax,
-                                      cosmo, basisfunc, K, wp, True, *args)
+                                      cosmo, basisfunc, K, wp, True, None, *args)
     print rrs
 
 
@@ -55,27 +56,90 @@ def est_multi(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs, data1, rand1, data2, r
     nr2 = len(rand2)
 
     print 'Calculating dd vector'
-    print args
 
-    nproc = 2
-    pool = mp.Pool(processes=nproc)
+    pair_arrs = [[d1d2pairs, data1, data2, False],
+                 [d1r2pairs, data1, rand2, False],
+                 [d2r1pairs, data2, rand1, False],
+                 [r1r2pairs, rand1, rand2, True]]
 
-    chunksize = int(len(d1d2pairs)/nproc)
+    nproc = 8
+    print mp.cpu_count(), nproc
 
-    results = [pool.apply_async(project_pairs, args=(d1d2pairs, data1, data2, pimax, rmax,
-                                      cosmo, basisfunc, K, wp, False, args[0], args[1])) for _ in range(nproc)]
-    output = [p.get() for p in results]
+    count_arrs = [[] for _ in range(len(basisfunc))]
+    for pairs, cat1, cat2, tensor in pair_arrs:
 
-    for b in range(len(basisfunc)):
-        dd_multi = np.zeros(K)
-        for out in output:
-            dd_multi += out[b]
-        print dd_multi
+        start = time.time()
+        outq = mp.Queue()
+        print len(pairs)
+        chunksize = int(np.ceil(float(len(pairs))/float(nproc)))
+        pairchunks = [pairs[i*chunksize:min((i+1)*chunksize, len(pairs))] for i in range(nproc)]
+        pargs = [[pc, cat1, cat2, pimax, rmax, cosmo, basisfunc, K, wp, tensor]+[outq]+list(args) for pc in pairchunks]
+        processes = [mp.Process(target=project_pairs, args=parg) for parg in pargs]
+        print 'Starting'
+        for p in processes:
+            p.start()
+        for p in processes:
+            p.join()
+        rez = [outq.get() for _ in processes]
 
-    print "One shot"
-    dds = project_pairs(d1d2pairs, data1, data2, pimax, rmax,
-                                      cosmo, basisfunc, K, wp, False, *args)
-    print dds
+        for bb in range(len(basisfunc)):
+            counts_multi = np.zeros(K)
+            if tensor:
+                counts_tensor_multi = np.zeros((K,K))
+            for rz in rez:
+                if tensor:
+                    counts_multi += rz[0][bb]
+                    counts_tensor_multi += rz[1][bb]
+                else:
+                    counts_multi += rz[bb]
+            count_arrs[bb].append(counts_multi)
+            if tensor:
+                count_arrs[bb].append(counts_tensor_multi)
+        end = time.time()
+        print 'TIME:', end-start
+
+        print counts_multi
+
+
+    a = []
+    for bb in range(len(basisfunc)):
+        dds, drs, rds, rrs, qqs = zip(*count_arrs)
+        dd = dds[bb] * 1./(nd1*nd2)
+        dr = drs[bb] * 1./(nd1*nr2)
+        rd = rds[bb] * 1./(nd2*nr1)
+        rr = rrs[bb] * 1./(nr1*nr2)
+        qq = qqs[bb] * 1./(nr1*nr2)
+        a.append(calc_amplitudes(dd, dr, rd, rr, qq))
+    print 'Computed amplitudes'
+    print a
+
+############
+    # pool = mp.Pool(processes=nproc)
+    #
+    # start = time.time()
+    # chunksize = int(np.ceil(float(len(r1r2pairs))/float(nproc)))
+    # d1d2pairchunks = [r1r2pairs[i*chunksize:min((i+1)*chunksize, len(r1r2pairs))] for i in range(nproc)]
+    # pargs = [[ddp, rand1, rand1, pimax, rmax, cosmo, basisfunc, K, wp, False]+list(args) for ddp in d1d2pairchunks]
+    # results = [pool.apply_async(project_pairs, args=parg) for parg in pargs]
+    # pool.close()
+    # pool.join()
+    # output = [p.get() for p in results]
+    #
+    # for b in range(len(basisfunc)):
+    #     dd_multi = np.zeros(K)
+    #     for out in output:
+    #         dd_multi += out[b]
+    #     print dd_multi
+    # end = time.time()
+    # print end-start
+##############
+    # print "One shot"
+    # start = time.time()
+    # dds = project_pairs(r1r2pairs, rand1, rand2, pimax, rmax,
+    #                                   cosmo, basisfunc, K, wp, False, None, *args)
+    # end = time.time()
+    # print end-start
+    # print dds
 
     return a
 
@@ -89,11 +153,13 @@ def calc_amplitudes(dd, dr, rd, rr, qq):
     print 'Calculating amplitudes'
     qqinv = np.matrix(qq).I
     numerator = dd - dr - rd + rr
+    print dd
+    print numerator
     a = np.matmul(qqinv, numerator)
     return a
 
 
-def project_pairs(pairs, cat1, cat2, pimax, rmax, cosmo, basisfunc, K, wp, tensor, *args):
+def project_pairs(pairs, cat1, cat2, pimax, rmax, cosmo, basisfunc, K, wp, tensor, outq, *args):
 
     bnum = len(basisfunc)
     counts = [np.zeros(K) for _ in range(bnum)]
@@ -131,9 +197,16 @@ def project_pairs(pairs, cat1, cat2, pimax, rmax, cosmo, basisfunc, K, wp, tenso
                         counts_tensor[bb] += ein
 
     if tensor:
-        return counts, counts_tensor
+        if outq:
+            outq.put([counts, counts_tensor])
+            #outq.put(counts_tensor)
+        else:
+            return counts, counts_tensor
     else:
-        return counts
+        if outq:
+            outq.put(counts)
+        else:
+            return counts
 
 
 def get_pi(dcm1, dcm2, i, j, h):

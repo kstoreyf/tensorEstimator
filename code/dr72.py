@@ -266,7 +266,7 @@ def run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo, frac=1, bi
 
     fn = '../data/lss.dr72bright{}_czcut.dat'.format(samplenum)
     data1 = pd.read_csv(fn)
-    rand1 = get_random(samplenum)
+    rand1 = get_random(data1)
 
     print 'Sample {}, {}'.format(samplenum, labels_mr[samplenum])
 
@@ -299,7 +299,7 @@ def run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo, frac=1, bi
     return rp_avg, wprp
 
 
-def get_random(samplenum, df_data):
+def get_random(df_data):
     fn = '../data/random-0.dr72bright.dat'
     # pretty sure fgotten is correct but couldn't find anywhere
     df_rand = pd.read_csv(fn, header=None, delim_whitespace=True, names=['ra',
@@ -316,7 +316,7 @@ def get_random(samplenum, df_data):
     return df_rand
 
 
-def samples_czcut(samplenums, threshold=False):
+def samples_czcut(samplenums):
 
     for samplenum in samplenums:
         print samplenum, labels_mr[samplenum]

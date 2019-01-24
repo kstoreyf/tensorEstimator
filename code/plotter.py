@@ -8,11 +8,12 @@ color_dict = {'corrfunc':'grey', 'tophat':'blue', 'piecewise':'red',
           'tophat_orig':'cyan', 'gaussian':'green', 'trig':'magenta',
           'treecorr': 'orange', 'top_quad':'purple'}
 
-color_list = ['red', 'orange', 'green', 'blue', 'cyan', 'magenta']
+color_list = ['magenta', 'red', 'black', 'limegreen', 'blue', 'cyan']
+#color_list = ['magenta', 'red', 'limegreen', 'blue', 'cyan']
 
 def main():
-    #plot_dr72bins()
-    plot()
+    plot_dr72bins()
+    #plot()
 
 def plot():
     #fn = "../results/dr72_brightLRG_frac0.1.npy"
@@ -35,13 +36,14 @@ def plot_dr72bins():
     rps = []
     wprps = []
     labels = []
-    samplenums = [7,8,9,10,11,12]
+    #samplenums = [7,8,9,10,11,12]
     #samplenums = [7,8,9,10,11]
+    samplenums = [21,20,19,18,16,14]
     #fns = ["../results/dr72_bin11_all.npy", "../results/dr72_bin11_pi2.npy"]
          #  "../results/dr72_bin11_pi1.npy", "../results/dr72_bin11_pi1corrfunc.npy"]
     #fns = ["../results/dr72_bin{}_rmin0.1_rmax50.npy".format(samplenum) for samplenum in samplenums]
     #fns = ['../results/dr72_bin11_all.npy', '../results/dr72_bin11_lsno2.npy']
-    fns = ["../results/dr72_bin{}_all.npy".format(samplenum) for samplenum in samplenums]
+    fns = ["../results/dr72_bin{}.npy".format(samplenum) for samplenum in samplenums]
     #fns = ['../results/dr72_bin7_all.npy', '../results/dr72_bin7_weights1.npy']
     #fns = ['../results/dr72_bin11_all.npy', '../results/dr72_bin11_rmin0.1.npy',
     #       '../results/dr72_bin11_rmin0.1_rmax50.npy', '../results/dr72_bin11_H0-100_Om0-0.3.npy']
@@ -98,7 +100,7 @@ def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None):
         #     plt.xscale('log')
         #     plt.yscale('log')
         # else:
-        ax0.loglog(rp, wprp, label=label, color=color, marker='o')
+        ax0.loglog(rp, wprp, label=label, color=color, marker='o', markersize=4)
         #ax0.semilogx(rp, wprp, label=label, color=color, marker='o')
 
         plt.xlabel(r'$r_p$ (Mpc/h)')
