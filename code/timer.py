@@ -7,15 +7,17 @@ import pandas as pd
 import run
 import estimator
 import pairs
+import estimator_chunks
+import pairgen
 
 #globals
 #ndata = [10, 31, 102, 307, 1012, 3158, 10015]
 #ndata = [10, 31, 102, 307, 1012]
-ndata = [10, 31, 102, 307]
+ndata = [10, 31, 102]
 colors = ['blue', 'orange', 'black', 'green']
 def main():
-    #time_pairs()
-    plot()
+    time_pairs()
+    #plot()
 
 def plot():
 
@@ -136,15 +138,26 @@ def time_pairs():
         print "Time corrfunc:", end4 - start4
         times_est[i] = end4 - start4
 
-        times_tot[i] = times_tcp[i] + times_est[i]
+        start4 = time.time()
+        ddgen = pairgen.PairGen(data1, data2, rmax, cosmo, wp)
+        drgen = pairgen.PairGen(data1, rand2, rmax, cosmo, wp)
+        rdgen = pairgen.PairGen(data2, rand1, rmax, cosmo, wp)
+        rrgen = pairgen.PairGen(rand1, rand2, rmax, cosmo, wp)
+        a = estimator_chunks.est_multi(ddgen, drgen, rdgen, rrgen, pimax, rmax,
+                                    cosmo, basisfunc, K, wp, logrpbins_avg, logwidth)
+        end4 = time.time()
+        print "Time chunks:", end4 - start4
+        times_tot[i] = end4 - start4
+
+        #times_tot[i] = times_tcp[i] + times_est[i]
 
 
     # time_arrs = [times_tc, times_kd]
     # labels = ['treecorr', 'kdtree']
     time_arrs = [times_tcp, times_est, times_tot]
-    labels = ['treecorr pairs', 'estimator', 'total']
+    labels = ['treecorr pairs', 'estimator', 'chunks']
 
-    np.save('../results/times_pairs_n{}.npy'.format(max(ndata)), [ndata, time_arrs, labels])
+    np.save('../results/times_chunks_n{}.npy'.format(max(ndata)), [ndata, time_arrs, labels])
 
     plot_times(ndata, time_arrs, labels)
 
