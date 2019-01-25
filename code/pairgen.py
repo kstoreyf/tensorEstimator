@@ -13,35 +13,37 @@ class PairGen():
         self.rmax = rmax
         self.cosmo = cosmo
         self.wp = wp
-        self.cat1loc = 0
-        self.cat1stop = len(cat1)
+        #self.cat1loc = 0
+        #self.cat1stop = len(cat1)
         self.chunksize = chunksize
         self.construct_tree()
 
 
-    def get_pairchunk(self):
+    def get_pairchunk(self, cat1start):
 
         #print self.cat1loc
         #print self.chunksize
 
-        if self.cat1loc >= min(self.cat1stop, len(self.cat1)):
-            return []
+        # if self.cat1loc >= min(self.cat1stop, len(self.cat1)):
+        #     return []
 
+        cat1loc = cat1start
         pairchunk = []
         while len(pairchunk) < self.chunksize:
-            pairs = self.get_neighbors()
+            pairs = self.get_neighbors(cat1loc)
             # Eliminate self-pairs with zero separation
             pairs = [p for p in pairs if p[2] > 0]
             #print len(pairs)
             pairchunk += pairs
+            cat1loc += 1
             #print len(pairchunk)
             #print
-        return pairchunk
+        return pairchunk, cat1loc
 
 
-    def get_neighbors(self):
+    def get_neighbors(self, cat1loc):
 
-        i = self.cat1loc
+        i = cat1loc
         ipoint = np.array([self.cat1['xproj'][i], self.cat1['yproj'].values[i], self.cat1['zproj'].values[i]])
         if not self.wp:
             ipoint *= self.cat1['dcm_mpc'][i]  # turn projected into real space
@@ -68,7 +70,7 @@ class PairGen():
         dists *= self.cosmo.h
 
         pairs = [(i, locs[k], dists[k]) for k in range(len(locs))]
-        self.cat1loc += 1
+        #self.cat1loc += 1
 
         return pairs
 

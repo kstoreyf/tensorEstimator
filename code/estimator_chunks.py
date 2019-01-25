@@ -54,7 +54,7 @@ def est_multi(ddpg, drpg, rdpg, rrpg, pimax, rmax, cosmo, basisfunc, K, wp, *arg
                  [rdpg, False],
                  [rrpg, True]]
 
-    nproc = 2
+    nproc = 1
     print mp.cpu_count(), nproc
 
     count_arrs = [[] for _ in range(len(basisfunc))]
@@ -64,12 +64,11 @@ def est_multi(ddpg, drpg, rdpg, rrpg, pimax, rmax, cosmo, basisfunc, K, wp, *arg
         outq = mp.Queue()
         #print len(pairs)
         subsize = int(np.ceil(float(len(pg.cat1))/float(nproc)))
-        for nn in range(nproc):
 
-        #pairchunks = [pairs[i*chunksize:min((i+1)*chunksize, len(pairs))] for i in range(nproc)]
+        loc_arr = [(nn*subsize, min((nn+1)*subsize, len(pg.cat1))) for nn in range(nproc)]
+        print loc_arr
 
-
-        pargs = [[pg, pimax, rmax, cosmo, basisfunc, K, wp, tensor]+[outq]+list(args) for _ in range(nproc)]
+        pargs = [[pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor]+[outq]+list(args) for locs in loc_arr]
         processes = [mp.Process(target=project_pairs, args=parg) for parg in pargs]
         print 'Starting'
         for p in processes:
@@ -127,7 +126,7 @@ def calc_amplitudes(dd, dr, rd, rr, qq):
     return a
 
 
-def project_pairs(pg, pimax, rmax, cosmo, basisfunc, K, wp, tensor, outq, *args):
+def project_pairs(pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor, outq, *args):
 
     bnum = len(basisfunc)
     counts = [np.zeros(K) for _ in range(bnum)]
@@ -140,10 +139,11 @@ def project_pairs(pg, pimax, rmax, cosmo, basisfunc, K, wp, tensor, outq, *args)
     dcm2_transverse = pg.cat2['dcm_transverse_mpc'].values
     h = cosmo.h
 
-    pairs = pg.get_pairchunk()
-    #loops while not empty:
-    while pairs:
+    startloc, endloc = locs
+    loc = startloc
 
+    while loc<endloc:
+        pairs = pg.get_neighbors(loc)
         for i,j,r in pairs:
 
             if wp:
@@ -168,7 +168,8 @@ def project_pairs(pg, pimax, rmax, cosmo, basisfunc, K, wp, tensor, outq, *args)
                             ein = np.einsum('i,j', u_ij, u_ij, out=outarr)
                             counts_tensor[bb] += ein
 
-        pairs = pg.get_pairchunk()
+        #pairs = pg.get_neighbors(loc)
+        loc += 1
 
 
     if tensor:
