@@ -10,11 +10,17 @@ import pairs
 
 #globals
 #ndata = [10, 31, 102, 307, 1012, 3158, 10015]
-ndata = [10, 31, 102, 307, 1012]
-#ndata = [10, 31]
+#ndata = [10, 31, 102, 307, 1012]
+ndata = [10, 31, 102, 307]
 colors = ['blue', 'orange', 'black', 'green']
 def main():
-    time_pairs()
+    #time_pairs()
+    plot()
+
+def plot():
+
+    ndatas, time_arrs, labels = np.load('../results/times_pairs_n{}.npy'.format(max(ndata)))
+    plot_times(ndatas, time_arrs, labels)
 
 
 def time_est():
@@ -123,7 +129,7 @@ def time_pairs():
         # times_cf[i] = end3 - start3
 
         start4 = time.time()
-        a = estimator.est(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs,
+        a = estimator.est_multi(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs,
                           data1, rand1, data2, rand2, pimax, rmax, cosmo,
                           basisfunc, K, wp, logrpbins_avg, logwidth)
         end4 = time.time()
@@ -138,10 +144,12 @@ def time_pairs():
     time_arrs = [times_tcp, times_est, times_tot]
     labels = ['treecorr pairs', 'estimator', 'total']
 
-    plot_times(time_arrs, labels, ndata)
+    np.save('../results/times_pairs_n{}.npy'.format(max(ndata)), [ndata, time_arrs, labels])
+
+    plot_times(ndata, time_arrs, labels)
 
 
-def plot_times(time_arrs, labels, ndata):
+def plot_times(ndata, time_arrs, labels):
 
     plt.figure()
 

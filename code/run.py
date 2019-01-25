@@ -10,6 +10,8 @@ from Corrfunc.utils import convert_3d_counts_to_cf
 from Corrfunc.utils import convert_rp_pi_counts_to_wp
 
 import pairs
+import pairgen
+import estimator_chunks
 import estimator
 import plotter
 
@@ -20,8 +22,8 @@ funcs = {'tophat': estimator.tophat, 'tophat_orig': estimator.tophat,
 def main():
 
     #nd = 10
-    #nd = 31
-    nd = 102
+    nd = 31
+    #nd = 102
     #nd = 307
     #nd = 1012
     #nd = 3158
@@ -33,7 +35,7 @@ def main():
 
     print 'Running for n_data={}'.format(nd)
 
-    K = 12
+    K = 8
     #Separations should be given in Mpc/h
     pimax = 40 #Mpc/h
     rpmin = 0.1
@@ -77,8 +79,11 @@ def main():
 
 
     start = time.time()
-    rps, wprps = run(data1, rand1, data2, rand2, pimax, rpmin, rpmax,
-                bin_sep, basisfuncs, K, cosmo, wp, rpbins, vals, bin_arg, logwidth)
+    # rps, wprps = run(data1, rand1, data2, rand2, pimax, rpmin, rpmax,
+    #            bin_sep, basisfuncs, K, cosmo, wp, rpbins, vals, bin_arg, logwidth)
+
+    run_chunks(data1, rand1, data2, rand2, pimax, rpmin, rpmax,
+                     bin_sep, basisfuncs, K, cosmo, wp, rpbins, vals, bin_arg, logwidth)
 
     end = time.time()
     print 'Time run: {:3f} s'.format(end-start)
@@ -145,10 +150,12 @@ def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
     #ooh poss bc wouldn't do if had 2 diff data catalogs...
     print 'Pairs'
     start = time.time()
-    xi, d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs = pairs_treecorr(data1, rand1, data2, rand2,
-                                                                rmin, rmax, bin_sep, pimax, wp)
+    #xi, d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs = pairs_treecorr(data1, rand1, data2, rand2,
+    #                                                            rmin, rmax, bin_sep, pimax, wp)
+
+    d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs = pairs.pairs(data1, rand1, data2, rand2, rmax, cosmo, wp)
     end = time.time()
-    print "Time treecorr pairs:", end-start
+    print "Time pairs:", end-start
     print 'Pairs (DD, DR, RD, RR):', len(d1d2pairs), len(d1r2pairs), len(d2r1pairs), len(r1r2pairs)
 
     print 'Est'
@@ -187,8 +194,24 @@ def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
     # rps += rps_orig
     # wprps.append(xi*2)
     #test treecorr
-
+    print 'a from orig:'
+    print a
     return rps, wprps
+
+
+def run_chunks(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
+                   K, cosmo, wp, rpbins, vals, *args):
+
+    ddgen = pairgen.PairGen(data1, data2, rmax, cosmo, wp)
+    drgen = pairgen.PairGen(data1, rand2, rmax, cosmo, wp)
+    rdgen = pairgen.PairGen(data2, rand1, rmax, cosmo, wp)
+    rrgen = pairgen.PairGen(rand1, rand2, rmax, cosmo, wp)
+
+    a = estimator_chunks.est_multi(ddgen, drgen, rdgen, rrgen, pimax, rmax, cosmo, basisfuncs, K, wp, *args)
+
+    print 'a from chunks:'
+    print a
+
 
 
 def bins_logavg(bins):
