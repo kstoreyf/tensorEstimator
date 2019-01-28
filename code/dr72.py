@@ -164,6 +164,8 @@ def run_bins(min_sep, max_sep, bin_size, wp, saveto=None):
     K = (np.log10(max_sep) - np.log10(min_sep))/bin_size
     rpbins = np.logspace(np.log10(min_sep), np.log10(max_sep), K+1)
     rpbins_avg = run.bins_logavg(rpbins)
+
+
     rps = []
     pibinwidth = 1 #Mpc/h
     wprps = []

@@ -44,13 +44,15 @@ class PairGen():
     def get_neighbors(self, cat1loc):
 
         i = cat1loc
-        ipoint = np.array([self.cat1['xproj'][i], self.cat1['yproj'].values[i], self.cat1['zproj'].values[i]])
+        #print self.cat1
+        #print list(self.cat1)
+        ipoint = np.array([self.cat1['xproj'].values[i], self.cat1['yproj'].values[i], self.cat1['zproj'].values[i]])
         if not self.wp:
-            ipoint *= self.cat1['dcm_mpc'][i]  # turn projected into real space
+            ipoint *= self.cat1['dcm_mpc'].values[i]  # turn projected into real space
             rmax_tree = self.rmax
         if self.wp:
             # here the given rmax rmax is really rpmax
-            rmax_tree = self.rmax / (self.cat1['dcm_transverse_mpc'][i] * self.cosmo.h)  # turn bin into unit dist
+            rmax_tree = self.rmax / (self.cat1['dcm_transverse_mpc'].values[i] * self.cosmo.h)  # turn bin into unit dist
 
         ntree = len(self.tree.data)
         dists, locs = self.tree.query(ipoint, k=ntree, distance_upper_bound=rmax_tree)
@@ -62,14 +64,17 @@ class PairGen():
             dists = dists[:imax]
 
         if self.wp:
-            dists = np.array([dists[k] * 0.5 * (self.cat1['dcm_transverse_mpc'][i]
-                                                + self.cat2['dcm_transverse_mpc'][locs[k]]) for k in range(len(locs))])
+            dists = np.array([dists[k] * 0.5 * (self.cat1['dcm_transverse_mpc'].values[i]
+                                                + self.cat2['dcm_transverse_mpc'].values[locs[k]]) for k in range(len(locs))])
 
         # if wp: dists are transverse distances in mpc/h
         # if not wp: dists are real space 3d dists in mpc/h
-        dists *= self.cosmo.h
+        # TODO: don't know why don't need this??
+        #dists *= self.cosmo.h
 
         pairs = [(i, locs[k], dists[k]) for k in range(len(locs))]
+        #Eliminate self-pairs
+        pairs = [p for p in pairs if p[2] > 0]
         #self.cat1loc += 1
 
         return pairs

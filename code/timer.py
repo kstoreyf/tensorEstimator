@@ -13,16 +13,37 @@ import pairgen
 #globals
 #ndata = [10, 31, 102, 307, 1012, 3158, 10015]
 #ndata = [10, 31, 102, 307, 1012]
-ndata = [10, 31, 102]
-colors = ['blue', 'orange', 'black', 'green']
+ndata = [10, 31]
+#colors = ['blue', 'orange', 'black', 'green']
+#colors = ['red', 'orange', 'magenta']
+#colors = ['magenta']
+colors = ['red', 'orange', 'green', 'blue', 'purple']
 def main():
-    time_pairs()
-    #plot()
+    #time_pairs()
+    plot()
 
 def plot():
+    fns = ['../results/times_chunksonly_nproc4_n307.npy',
+           '../results/times_chunksonly_nproc8_n307.npy',
+           '../results/times_chunksonly_nproc16_n307.npy']
+    nds = []
+    ts = []
+    ls = []
+    nprocs = [4,8,12,16,24]
+    for i in range(len(nprocs)):
 
-    ndatas, time_arrs, labels = np.load('../results/times_pairs_n{}.npy'.format(max(ndata)))
-    plot_times(ndatas, time_arrs, labels)
+        #fn = '../results/times_pairs_n{}.npy'.format(max(ndata))
+        fn = '../results/times_chunksonly_nproc{}_n307.npy'.format(nprocs[i])
+        ndatas, time_arrs, labels = np.load(fn)
+
+        nds += list(ndatas)
+        ts += list(time_arrs)
+        #ls += list(labels)
+        ls += ['chunks, nproc={}'.format(nprocs[i])]
+
+    plot_times(nds, ts, ls)
+
+        #plot_times(ndatas, time_arrs, labels)
 
 
 def time_est():
@@ -155,19 +176,21 @@ def time_pairs():
     # time_arrs = [times_tc, times_kd]
     # labels = ['treecorr', 'kdtree']
     time_arrs = [times_tcp, times_est, times_tot]
+    ndatas = [ndata]*len(time_arrs)
     labels = ['treecorr pairs', 'estimator', 'chunks']
 
-    np.save('../results/times_chunks_n{}.npy'.format(max(ndata)), [ndata, time_arrs, labels])
+    np.save('../results/times_chunks_n{}.npy'.format(max(ndata)), [ndatas, time_arrs, labels])
 
     plot_times(ndata, time_arrs, labels)
 
 
-def plot_times(ndata, time_arrs, labels):
+def plot_times(ndatas, time_arrs, labels):
 
     plt.figure()
 
     for i in range(len(labels)):
         times = time_arrs[i]
+        ndata = ndatas[i]
 
         logndata = np.log10(ndata)
 

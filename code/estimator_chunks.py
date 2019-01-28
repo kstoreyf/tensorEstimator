@@ -2,103 +2,83 @@ import numpy as np
 import multiprocessing as mp
 import time
 
+import estimator
 
-
-def est(ddpg, drpg, rdpg, rrpg, pimax, rmax, cosmo, basisfunc, K, wp, *args):
-
-    nd1 = len(ddpg.cat1)
-    nr1 = len(rrpg.cat1)
-    nd2 = len(ddpg.cat2)
-    nr2 = len(rrpg.cat2)
-
-    print 'Calculating dd vector'
-    dds = project_pairs(ddpg, pimax, rmax, cosmo, basisfunc, K, wp, False, None, *args)
-    print dds
-    # is d1 r2 right? cross?
-    print 'Calculating dr vector'
-    drs = project_pairs(drpg, pimax, rmax, cosmo, basisfunc, K, wp, False, None, *args)
-    print drs
-
-    print 'Calculating rd vector'
-    # should check if need to compute both aka if d1==d2 (drs and rds should be same bc using symmetric defs of dcm)
-    rds = project_pairs(rdpg, pimax, rmax, cosmo, basisfunc, K, wp, False, None, *args)
-
-    print 'Calculating rr vector'
-    rrs, qqs = project_pairs(rrpg, pimax, rmax, cosmo, basisfunc, K, wp, True, None, *args)
-    print rrs
-
-    a = []
-    for bb in range(len(basisfunc)):
-        dd = dds[bb] * 1./(nd1*nd2)
-        dr = drs[bb] * 1./(nd1*nr2)
-        rd = rds[bb] * 1./(nd2*nr1)
-        rr = rrs[bb] * 1./(nr1*nr2)
-        qq = qqs[bb] * 1./(nr1*nr2)
-        a.append(calc_amplitudes(dd, dr, rd, rr, qq))
-    print 'Computed amplitudes'
-
-    return a
-
-
-def est_multi(ddpg, drpg, rdpg, rrpg, pimax, rmax, cosmo, basisfunc, K, wp, *args):
+def est(ddpg, drpg, rdpg, rrpg, pimax, rmax, cosmo, basisfunc, K, wp, nproc, *args):
 
     nd1 = len(ddpg.cat1)
     nr1 = len(rrpg.cat1)
     nd2 = len(ddpg.cat2)
     nr2 = len(rrpg.cat2)
 
-    print 'Calculating dd vector'
 
-    pair_arrs = [[ddpg, False],
-                 [drpg, False],
-                 [rdpg, False],
-                 [rrpg, True]]
+    if nproc==0:
+        locs = None
+        print 'Calculating dd vector'
+        dds = project_pairs(ddpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, False, None, *args)
+        print dds
+        # is d1 r2 right? cross?
+        print 'Calculating dr vector'
+        drs = project_pairs(drpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, False, None, *args)
+        print drs
 
-    nproc = 1
-    print mp.cpu_count(), nproc
+        print 'Calculating rd vector'
+        # should check if need to compute both aka if d1==d2 (drs and rds should be same bc using symmetric defs of dcm)
+        rds = project_pairs(rdpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, False, None, *args)
 
-    count_arrs = [[] for _ in range(len(basisfunc))]
-    for pg, tensor in pair_arrs:
+        print 'Calculating rr vector'
+        rrs, qqs = project_pairs(rrpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, True, None, *args)
+        print rrs
 
-        start = time.time()
-        outq = mp.Queue()
-        #print len(pairs)
-        subsize = int(np.ceil(float(len(pg.cat1))/float(nproc)))
+    else:
+        pair_arrs = [[ddpg, False],
+                     [drpg, False],
+                     [rdpg, False],
+                     [rrpg, True]]
 
-        loc_arr = [(nn*subsize, min((nn+1)*subsize, len(pg.cat1))) for nn in range(nproc)]
-        print loc_arr
+        print mp.cpu_count(), nproc
 
-        pargs = [[pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor]+[outq]+list(args) for locs in loc_arr]
-        processes = [mp.Process(target=project_pairs, args=parg) for parg in pargs]
-        print 'Starting'
-        for p in processes:
-            p.start()
-        for p in processes:
-            p.join()
-        rez = [outq.get() for _ in processes]
+        count_arrs = [[] for _ in range(len(basisfunc))]
+        for pg, tensor in pair_arrs:
 
-        for bb in range(len(basisfunc)):
-            counts_multi = np.zeros(K)
-            if tensor:
-                counts_tensor_multi = np.zeros((K,K))
-            for rz in rez:
+            start = time.time()
+            outq = mp.Queue()
+            subsize = int(np.ceil(float(len(pg.cat1))/float(nproc)))
+
+            loc_arr = [(nn*subsize, min((nn+1)*subsize, len(pg.cat1))) for nn in range(nproc)]
+            print loc_arr
+
+            pargs = [[pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor]+[outq]+list(args) for locs in loc_arr]
+            processes = [mp.Process(target=project_pairs, args=parg) for parg in pargs]
+            print 'Starting'
+            for p in processes:
+                p.start()
+            for p in processes:
+                p.join()
+            rez = [outq.get() for _ in processes]
+
+            for bb in range(len(basisfunc)):
+                counts_multi = np.zeros(K)
                 if tensor:
-                    counts_multi += rz[0][bb]
-                    counts_tensor_multi += rz[1][bb]
-                else:
-                    counts_multi += rz[bb]
-            count_arrs[bb].append(counts_multi)
-            if tensor:
-                count_arrs[bb].append(counts_tensor_multi)
-        end = time.time()
-        print 'TIME:', end-start
-
-        print counts_multi
+                    counts_tensor_multi = np.zeros((K,K))
+                for rz in rez:
+                    if tensor:
+                        counts_multi += rz[0][bb]
+                        counts_tensor_multi += rz[1][bb]
+                    else:
+                        counts_multi += rz[bb]
+                count_arrs[bb].append(counts_multi)
+                if tensor:
+                    count_arrs[bb].append(counts_tensor_multi)
+            end = time.time()
+            print counts_multi
+            print 'TIME:', end-start
 
 
     a = []
     for bb in range(len(basisfunc)):
-        dds, drs, rds, rrs, qqs = zip(*count_arrs)
+        if nproc>0:
+            dds, drs, rds, rrs, qqs = zip(*count_arrs)
         dd = dds[bb] * 1./(nd1*nd2)
         dr = drs[bb] * 1./(nd1*nr2)
         rd = rds[bb] * 1./(nd2*nr1)
@@ -106,7 +86,6 @@ def est_multi(ddpg, drpg, rdpg, rrpg, pimax, rmax, cosmo, basisfunc, K, wp, *arg
         qq = qqs[bb] * 1./(nr1*nr2)
         a.append(calc_amplitudes(dd, dr, rd, rr, qq))
     print 'Computed amplitudes'
-    print a
 
     return a
 
@@ -123,7 +102,7 @@ def calc_amplitudes(dd, dr, rd, rr, qq):
     print dd
     print numerator
     a = np.matmul(qqinv, numerator)
-    return a
+    return a.A1
 
 
 def project_pairs(pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor, outq, *args):
@@ -139,8 +118,13 @@ def project_pairs(pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor, outq, 
     dcm2_transverse = pg.cat2['dcm_transverse_mpc'].values
     h = cosmo.h
 
+    if not locs:
+        locs = (0, len(pg.cat1))
+
     startloc, endloc = locs
     loc = startloc
+
+    pimax *= h
 
     while loc<endloc:
         pairs = pg.get_neighbors(loc)
@@ -257,12 +241,28 @@ def top_z(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
     u = np.concatenate((u, u*val, u*val**2))
     return u
 
-def top_Mr(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
+def top_Mrz(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
     logrp = np.log10(rp)
     u = np.array([top(logrp, peak, logwidth) for peak in logbins_avg])
     if not val:
-        val = 0.5*(cat1['M_r'][i] + cat2['M_r'][j])
-    u = np.concatenate((u, u*val, u*val**2))
+        val = 0.5*(cat1['M_rz'][i] + cat2['M_rz'][j])
+    u = np.concatenate((u, u*abs(val), u*abs(val)**2))
+    return u
+
+def top_Mrz_lin(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
+    logrp = np.log10(rp)
+    u = np.array([top(logrp, peak, logwidth) for peak in logbins_avg])
+    if not val:
+        val = 0.5*(cat1['M_rz'][i] + cat2['M_rz'][j])
+    u = u*abs(val)
+    return u
+
+def top_Mrz_0lin(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
+    logrp = np.log10(rp)
+    u = np.array([top(logrp, peak, logwidth) for peak in logbins_avg])
+    if not val:
+        val = 0.5*(cat1['M_rz'][i] + cat2['M_rz'][j])
+    u = np.concatenate((u, u*abs(val)))
     return u
 
 def gauss_Mr(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):

@@ -32,14 +32,20 @@ def compute_pairs(df_cat, df_tree, tree, rmax, cosmo, wp):
     ntree = len(tree.data)
 
     for i in range(ncat):
-        ipoint = np.array([df_cat['xproj'][i], df_cat['yproj'].values[i], df_cat['zproj'].values[i]])
+        ipoint = np.array([df_cat['xproj'].values[i], df_cat['yproj'].values[i], df_cat['zproj'].values[i]])
         if not wp:
-            ipoint *= df_cat['dcm_mpc'][i] #turn projected into real space
+            #TODO: this should maybe have a cosmo.h???
+            ipoint *= df_cat['dcm_mpc'].values[i] #turn projected into real space
             rmax_tree = rmax
         if wp:
-            # here the given rmax rmax is really rpmax
-            rmax_tree = rmax/(df_cat['dcm_transverse_mpc'][i] * cosmo.h) #turn bin into unit dist
+            # here the given rmax is really rpmax
+            #TODO: this doesn't change anything right now!!
+            #ok it does at the edges
+            rmax_tree = rmax/(df_cat['dcm_transverse_mpc'].values[i] * cosmo.h) #turn bin into unit dist
+            #rmax_tree = rmax/(df_cat['dcm_transverse_mpc'].values[i]) #turn bin into unit dist
 
+        #print ipoint
+        #print rmax_tree
         dists, locs = tree.query(ipoint, k=ntree, distance_upper_bound=rmax_tree)
 
         # Query returns infinities when <k neighbors are found, cut these
@@ -47,14 +53,17 @@ def compute_pairs(df_cat, df_tree, tree, rmax, cosmo, wp):
             imax = next(index for index, value in enumerate(locs) if value == ntree)
             locs = locs[:imax]
             dists = dists[:imax]
+        #print dists
+        #print len(dists)
 
         if wp:
-            dists = np.array([dists[k]*0.5*(df_cat['dcm_transverse_mpc'][i]
-                    + df_tree['dcm_transverse_mpc'][locs[k]]) for k in range(len(locs))])
+            dists = np.array([dists[k]*0.5*(df_cat['dcm_transverse_mpc'].values[i]
+                    + df_tree['dcm_transverse_mpc'].values[locs[k]]) for k in range(len(locs))])
 
         # if wp: dists are transverse distances in mpc/h
         # if not wp: dists are real space 3d dists in mpc/h
-        dists *= cosmo.h
+        # TODO: why doesn't this need a cosmo.h?? matches corrfunc this way
+        #dists *= cosmo.h
         pairs += [(i, locs[k], dists[k]) for k in range(len(locs))]
 
     return pairs

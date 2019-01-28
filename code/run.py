@@ -22,8 +22,8 @@ funcs = {'tophat': estimator.tophat, 'tophat_orig': estimator.tophat,
 def main():
 
     #nd = 10
-    nd = 31
-    #nd = 102
+    #nd = 31
+    nd = 102
     #nd = 307
     #nd = 1012
     #nd = 3158
@@ -38,6 +38,7 @@ def main():
     K = 8
     #Separations should be given in Mpc/h
     pimax = 40 #Mpc/h
+    pibinwidth = 40
     rpmin = 0.1
     rpmax = 40. #Mpc/h
     bin_sep = np.log(rpmax / rpmin) / float(K) #natural log as treecorr expects
@@ -77,37 +78,42 @@ def main():
     # labels = ['top']
     #K*=3
 
+    rps = []
+    wprps = []
 
+    nproc = 4
     start = time.time()
-    # rps, wprps = run(data1, rand1, data2, rand2, pimax, rpmin, rpmax,
-    #            bin_sep, basisfuncs, K, cosmo, wp, rpbins, vals, bin_arg, logwidth)
+    #rpest, wprpest = run(data1, rand1, data2, rand2, pimax, rpmin, rpmax,
+    #            bin_sep, basisfuncs, K, cosmo, wp, rpbins, vals, pibinwidth, bin_arg, logwidth)
 
-    run_chunks(data1, rand1, data2, rand2, pimax, rpmin, rpmax,
-                     bin_sep, basisfuncs, K, cosmo, wp, rpbins, vals, bin_arg, logwidth)
-
+    rpest, wprpest, a = run_chunks(data1, rand1, data2, rand2, pimax, rpmin, rpmax,
+                                   bin_sep, basisfuncs, K, cosmo, wp, rpbins, vals,
+                                   pibinwidth, nproc, bin_arg, logwidth)
+    rps += [rpbins_avg]*len(wprpest)
+    wprps += list(wprpest)
     end = time.time()
     print 'Time run: {:3f} s'.format(end-start)
 
     #labels += ['tophat_orig']
     #labels += ['treecorr']
 
-    # wprps = []
-    # rps = []
+
     # labels = []
-    # start = time.time()
-    # weights_data = np.full(len(data1.index), 1.0)
-    # weights_rand = np.full(len(rand1.index), 1.0)
-    # est_corrfunc, wprp_corrfunc = run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo,
-    #                             weights_data=weights_data, weights_rand=weights_rand, nopi=True)
-    # rp_avg, est_corrfunc, wprp_corrfunc = run_corrfunc(data1, rand1, data2, rand2,
-    #                                            rpbins, pimax, cosmo, pibinwidth=pimax)
-    # print wprp_corrfunc
-    # end = time.time()
-    # print 'Time corrfunc: {:3f} s'.format(end-start)
-    # #rps.append(rpbins_avg)
-    # rps.append(rp_avg)
-    # wprps.append(wprp_corrfunc)
-    # labels.append('corrfunc rp avg')
+    start = time.time()
+    weights_data = np.full(len(data1.index), 1.0)
+    weights_rand = np.full(len(rand1.index), 1.0)
+    #est_corrfunc, wprp_corrfunc = run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo,
+    #                            weights_data=weights_data, weights_rand=weights_rand)
+    rp_avg, wprp_corrfunc = run_corrfunc(data1, rand1, data2, rand2,
+                                   rpbins, pimax, cosmo, pibinwidth=pibinwidth)
+    end = time.time()
+    print 'Time corrfunc: {:3f} s'.format(end-start)
+
+    rps.append(rpbins_avg)
+    wprps.append(wprp_corrfunc)
+    labels.append('corrfunc rp avg')
+    print rps
+    print wprps
     #
     # rps.append(rpbins_avg)
     # wprps.append(wprp_corrfunc)
@@ -140,7 +146,7 @@ def load_data(datafn, randfn):
 
 
 def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
-                   K, cosmo, wp, rpbins, vals, *args):
+                   K, cosmo, wp, rpbins, vals, pibinwidth, *args):
 
     print args
     # if wp, rmax means rpmax
@@ -149,11 +155,23 @@ def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
     #have to do with 2 in dr maybe?
     #ooh poss bc wouldn't do if had 2 diff data catalogs...
     print 'Pairs'
+    print rmin, rmax
     start = time.time()
+
     #xi, d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs = pairs_treecorr(data1, rand1, data2, rand2,
-    #                                                            rmin, rmax, bin_sep, pimax, wp)
+    #                                                           rmin, rmax, bin_sep, pimax, wp)
+
+    print
 
     d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs = pairs.pairs(data1, rand1, data2, rand2, rmax, cosmo, wp)
+    print len(d1d2pairs)
+    print len([pz for pz in d1d2pairs if pz[2]>rmin])
+
+
+    print min([pz[2] for pz in d1d2pairs]), max([pz[2] for pz in d1d2pairs])
+    print sorted([pz[2] for pz in d1d2pairs])
+
+
     end = time.time()
     print "Time pairs:", end-start
     print 'Pairs (DD, DR, RD, RR):', len(d1d2pairs), len(d1r2pairs), len(d2r1pairs), len(r1r2pairs)
@@ -162,13 +180,9 @@ def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
     if type(basisfuncs)!=list:
         basisfuncs = [basisfuncs]
 
-    multi=True
-    if multi:
-        a = estimator.est_multi(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs,
-                          data1, rand1, data2, rand2, pimax, rmax, cosmo, basisfuncs, K, wp, *args)
-    else:
-        a = estimator.est(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs,
-                          data1, rand1, data2, rand2, pimax, rmax, cosmo, basisfuncs, K, wp, *args)
+    nproc = 16
+    a = estimator.est(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs, data1, rand1,
+                       data2, rand2, pimax, rmax, cosmo, basisfuncs, K, wp, nproc, *args)
 
     # TODO: change for not projected? look at corrfunc
 
@@ -180,7 +194,8 @@ def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
     #         rps.append(rp)
     #         wprps.append(wprp)
     print 'wprp!'
-    rps, wprps = calc_wprp(a, basisfuncs, K, rpbins, vals, *args)
+    x = bins_logavg(rpbins)
+    rps, wprps = calc_wprp(a, x, basisfuncs, K, rpbins, vals, pibinwidth, *args)
 
 
     # just tophat orig
@@ -200,17 +215,24 @@ def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
 
 
 def run_chunks(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
-                   K, cosmo, wp, rpbins, vals, *args):
+                   K, cosmo, wp, rpbins, vals, pibinwidth, nproc, *args):
 
     ddgen = pairgen.PairGen(data1, data2, rmax, cosmo, wp)
     drgen = pairgen.PairGen(data1, rand2, rmax, cosmo, wp)
     rdgen = pairgen.PairGen(data2, rand1, rmax, cosmo, wp)
     rrgen = pairgen.PairGen(rand1, rand2, rmax, cosmo, wp)
 
-    a = estimator_chunks.est_multi(ddgen, drgen, rdgen, rrgen, pimax, rmax, cosmo, basisfuncs, K, wp, *args)
+    a = estimator_chunks.est(ddgen, drgen, rdgen, rrgen, pimax, rmax, cosmo,
+                                   basisfuncs, K, wp, nproc, *args)
+
+    x = bins_logavg(rpbins)
+
+    rps, wprps = calc_wprp(a, x, basisfuncs, K, rpbins, vals, pibinwidth, *args)
 
     print 'a from chunks:'
     print a
+
+    return rps, wprps, a
 
 
 
@@ -229,11 +251,10 @@ def log_width(bins):
     K = len(bins)-1
     return (np.log10(max(bins)) - np.log10(min(bins)))/float(K)
 
-def calc_wprp(a, basisfunc, K, rpbins, vals, *args):
+def calc_wprp(a, x, basisfunc, K, rpbins, vals, pibinwidth, *args):
 
     print a
     #x = np.logspace(np.log10(min(rpbins)), np.log10(max(rpbins)), 500)
-    x = bins_logavg(rpbins)
     #x = 0.5*np.array(rpbins[1:]+rpbins[:-1])
 
     rps = []
@@ -246,7 +267,7 @@ def calc_wprp(a, basisfunc, K, rpbins, vals, *args):
             xi_rp = np.matmul(a[bb], bases)
             xi_rp = np.squeeze(np.asarray(xi_rp))
             rps.append(x)
-            wprps.append(list(2 * xi_rp))
+            wprps.append(list(2*pibinwidth*xi_rp))
         else:
             for val in vals:
                 bases = basisfunc[bb](None, None, None, None, x, *args, val=val)
@@ -256,7 +277,7 @@ def calc_wprp(a, basisfunc, K, rpbins, vals, *args):
                 xi_rp = np.matmul(a[bb], bases)
                 xi_rp = np.squeeze(np.asarray(xi_rp))
                 rps.append(x)
-                wprps.append(list(2*xi_rp))
+                wprps.append(list(2*pibinwidth*xi_rp))
     print rps
     print wprps
     return rps, wprps

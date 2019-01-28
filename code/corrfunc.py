@@ -109,6 +109,9 @@ def calc_wprp(dd, dr, rr, ndata, nrand, pibinwidth=1):
     dd = dd.reshape(-1, pibinwidth, dd.shape[-1]).sum(axis=1)
     dr = dr.reshape(-1, pibinwidth, dr.shape[-1]).sum(axis=1)
     rr = rr.reshape(-1, pibinwidth, rr.shape[-1]).sum(axis=1)
+    print dd
+    print dr
+    print rr
 
     est_ls = calc_ls(dd, dr, rr, ndata, nrand)
     wprp = 2*pibinwidth*np.sum(est_ls, axis=0)

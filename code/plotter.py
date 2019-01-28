@@ -77,7 +77,8 @@ def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None):
     #     rps = [rps]
     #     wprps = [wprps]
     #     labels = [labels]
-
+    assert len(rps)==len(wprps) and len(wprps)==len(labels)
+    color_idx = np.linspace(0, 1, len(wprps))
     if wp_tocompare:
         compidx = labels.index(wp_tocompare)
         fig, (ax0, ax1) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 1]})
@@ -94,18 +95,22 @@ def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None):
         elif colors:
             color = colors[i]
         else:
-            color = color_list[i]
+            #color = color_list[i]
+            color = plt.cm.rainbow(color_idx[i])
         # if label=='tophat':
         #     plt.step(rps, [0]+wprp, marker=None, label=basisname)
         #     plt.xscale('log')
         #     plt.yscale('log')
         # else:
-        ax0.loglog(rp, wprp, label=label, color=color, marker='o', markersize=4)
+        print label
+        print rp
+        print wprp
+        ax0.loglog(rp, wprp, label=label, color=color, marker='o', markersize=4, ls='-')
         #ax0.semilogx(rp, wprp, label=label, color=color, marker='o')
 
         plt.xlabel(r'$r_p$ (Mpc/h)')
         plt.xlim(0.1, 40.)
-        ax0.set_ylim(1, 2000)
+        #ax0.set_ylim(1, 2000)
         ax0.set_ylabel(r'$w_p$($r_p$)')
 
         ax0.legend(loc='best')
