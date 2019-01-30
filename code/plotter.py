@@ -72,7 +72,7 @@ def plot_dr72bins():
 
 
 
-def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None):
+def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None, saveto=None):
     # if np.array(rps).ndim==1:
     #     rps = [rps]
     #     wprps = [wprps]
@@ -102,15 +102,13 @@ def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None):
         #     plt.xscale('log')
         #     plt.yscale('log')
         # else:
-        print label
-        print rp
-        print wprp
+
         ax0.loglog(rp, wprp, label=label, color=color, marker='o', markersize=4, ls='-')
         #ax0.semilogx(rp, wprp, label=label, color=color, marker='o')
 
         plt.xlabel(r'$r_p$ (Mpc/h)')
         plt.xlim(0.1, 40.)
-        #ax0.set_ylim(1, 2000)
+        ax0.set_ylim(1, 2000)
         ax0.set_ylabel(r'$w_p$($r_p$)')
 
         ax0.legend(loc='best')
@@ -124,6 +122,8 @@ def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None):
                 ax1.semilogx(rp, wprp/wpcomp, color=color)
                 ax1.set_ylabel(r'$w_p$/$w_{{p,\mathrm{{{0}}}}}$'.format(wp_tocompare))
 
+    if saveto:
+        plt.savefig(saveto)
     plt.show()
 
 

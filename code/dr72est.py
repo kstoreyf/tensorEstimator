@@ -4,6 +4,7 @@ import numpy as np
 import time
 from astropy.cosmology import LambdaCDM
 from matplotlib import pyplot as plt
+import argparse
 
 import run
 import plotter
@@ -22,7 +23,7 @@ Mr_lims =  {7: [-23, -22], 8: [-22, -21], 9: [-21, -20],
             21:-22, 20:-21.5, 19:-21, 18:-20.5, 17:-20, 16:-19.5,
             15:-19, 14:-18.5, 13:-18}
 pimaxs = {7: 60, 8: 60, 9: 60, 10: 60, 11: 40, 12: 40,
-          21: 60, 20: 60, 19:60, 18: 60, 17: 60, 16: 60, 15: 60, 14: 40, 13: 40}
+          21: 60, 20: 60, 19:60, 18: 60, 17: 60, 16: 60, 15: 60, 14: 40, 13: 40, 0: 60}
 labels_mr = {7: r'$-23<M_r<-22$', 8: r'$-22<M_r<-21$', 9: r'$-21<M_r<-20$',
             10: r'$-20<M_r<-19$', 11: r'$-19<M_r<-18$', 12: r'$-18<M_r<-17$',
             21: r'$M_r<-22$', 20: r'$M_r<-21.5$', 19: r'$M_r<-21$', 18: r'$M_r<-20.5$',
@@ -34,21 +35,25 @@ colors = {7:'red', 8:'orange', 9:'green',
 
 
 
-def main():
+def main(samplenum):
     #samplenums = [13,14,15,16,17,18,19,20,21]
     #samplenums = [13, 21]
-    #samples_czcut(samplenums, threshold=True)
+    samplenums = [7,8,9,10,11,12]
+    #samples_noczcut(samplenums)
+    #samples_czcut(samplenums)
+
     #run_dr72()
     #check_samples()
     #run_dr7_LRGs()
     #fix_results()
     #read_dat(0)
     #plot_survey()
+    #make_testsquare(samplenums)
     #make_testsquare([0])
-    #write_random()
-    run_est()
+    #write_randoms(samplenums)
+    run_est(samplenum)
     #eval_amps()
-
+    #plot_bins()
 
 
 def read_dat(samplenum):
@@ -81,14 +86,15 @@ def read_dat(samplenum):
     df.to_csv(fn_save)
 
 
-def write_random():
-    samplenum = 0
-    tag = '_photo'
-    fn = '../data/lss.dr72bright{}{}.dat'.format(samplenum, tag)
-    df_data = pd.read_csv(fn)
-    df_rand = read_random(df_data)
-    fn_save = '../data/random-0.dr72bright{}{}.dat'.format(samplenum, tag)
-    df_rand.to_csv(fn_save)
+def write_randoms(samplenums):
+    #tag = '_photo'
+    tag = '_noczcut'
+    for samplenum in samplenums:
+        fn = '../data/lss.dr72bright{}{}.dat'.format(samplenum, tag)
+        df_data = pd.read_csv(fn)
+        df_rand = read_random(df_data)
+        fn_save = '../data/random-0.dr72bright{}{}.dat'.format(samplenum, tag)
+        df_rand.to_csv(fn_save)
 
 
 def read_random(df_data):
@@ -115,47 +121,38 @@ def read_random(df_data):
 def make_testsquare(samplenums):
 
     for samplenum in samplenums:
+        print samplenum
         fn_data = '../data/lss.dr72bright{}'.format(samplenum)
         #fn_rand = '../data/random-0.dr72bright'
         fn_rand = '../data/random-0.dr72bright{}'.format(samplenum)
 
         fns = [fn_data, fn_rand]
-        tags = ['_photo', '_photo']
+        #tags = ['_photo', '_photo']
+        tags = ['_noczcut', '_noczcut']
         for i in range(len(tags)):
             df = pd.read_csv(fns[i]+tags[i]+'.dat')
 
+            ### square 1k
+            # ramin = 150
+            # ramax = 152.5
+            # decmin = 10
+            # decmax = 15
+            ### square 5k
             ramin = 150
-            ramax = 152.5
+            ramax = 155
             decmin = 10
-            decmax = 15
+            decmax = 25
             df = df[df['ra'] > ramin][df['ra'] < ramax][df['dec'] > decmin][df['dec'] < decmax]
             print len(df)
+            print min(df['cz']), max(df['cz'])
 
-            fn_save = fns[i]+'_square1k.dat'
+            #plt.figure()
+            #plt.scatter(df['ra'], df['dec'], s=1, color='red')
+
+            fn_save = fns[i]+'_square5k_noczcut.dat'
             df.to_csv(fn_save)
+        #plt.show()
 
-
-def plot_survey():
-
-    samplenums = [0, 21]
-    tags = ['_photo', '_czcut']
-
-    for i in range(len(samplenums)):
-        fn = '../data/lss.dr72bright{}{}.dat'.format(samplenums[i], tags[i])
-        data = pd.read_csv(fn)
-
-        frac = 0.01
-
-        #data = data.sample(1000).reset_index(drop=True)
-        #data = data[data['ra']<160][data['ra']>150][data['dec']>10][data['dec']<15]
-        data = data[data['ra']<152.5][data['ra']>150][data['dec']>10][data['dec']<15]
-
-        print len(data)
-        #data = data.sample(1000).reset_index(drop=True)
-
-        plt.figure()
-        plt.scatter(data['ra'], data['dec'], s=1, color='red')
-    plt.show()
 
 
 def check_samples():
@@ -184,7 +181,11 @@ def check_samples():
 
 
 
-def run_est():
+def run_est(samplenum):
+
+    tag = '_square5k'
+    nproc = 16
+
     #Separations should be given in Mpc/h
     min_sep = 0.13
     max_sep = 40. #Mpc/h
@@ -200,8 +201,6 @@ def run_est():
     wp = True
     cosmo = LambdaCDM(H0=70, Om0=0.25, Ob0=0.045, Ode0=0.75)
 
-    samplenum = 0
-    tag = '_square1k'
 
     ###############
     print 'Load samples'
@@ -226,7 +225,7 @@ def run_est():
     #vals = [np.mean(data1['M_rz'])]
     #vals = np.linspace(min(data1['M_rz']), max(data1['M_rz']), 6)
     #vals = [-18, -18.5, -19, -19.5, -20]
-    vals = [-18,-19,-20,-21,-22,-23]
+    vals = [-18.5, -19.5, -20.5, -21.5, -22.5]
     print vals
     bin_arg = logrpbins_avg
 
@@ -234,31 +233,29 @@ def run_est():
     wprps = []
     # weights_data = data1['fgotten']
     # weights_rand = rand1['fgotten']
-    weights_data = None
-    weights_rand = None
-    print 'Corrfuncing'
-    rpcf, wprpcf = run.run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo,
-                                    weights_data=weights_data, weights_rand=weights_rand,
-                                    pibinwidth=pibinwidth) #pimax because my est isnt binning in pi
-    rps.append(rpbins_avg)
-    wprps.append(wprpcf)
+    # weights_data = None
+    # weights_rand = None
+    # print 'Corrfuncing'
+    # rpcf, wprpcf = run.run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo,
+    #                                 weights_data=weights_data, weights_rand=weights_rand,
+    #                                 pibinwidth=pibinwidth) #pimax because my est isnt binning in pi
+    # rps.append(rpbins_avg)
+    # wprps.append(wprpcf)
 
     #basisfuncs = [estimator_chunks.tophat]
-
     #basisfuncs = [estimator_chunks.top_Mrz]
-    basisfuncs = [estimator_chunks.top_Mrz_0lin]
+    basisfuncs = [estimator_chunks.top_Mrz]
     K *= 2
     print 'Running vecest'
     #rp, wprp = run.run(data1, rand1, data2, rand2, pimax, min_sep, max_sep,
     #                  bin_size, basisfuncs, K, cosmo, wp, rpbins, vals, pibinwidth, bin_arg, logwidth)
-    nproc = 16
     rpsest, wprpsest, a = run.run_chunks(data1, rand1, data2, rand2, pimax, min_sep,
                                 max_sep, bin_size, basisfuncs, K, cosmo, wp, rpbins,
                                 vals, pibinwidth, nproc, bin_arg, logwidth)
     rps += [rpbins_avg]*len(wprpsest)
     wprps += wprpsest
 
-    np.save('../results/amps/amps_square1k_topMrz0lin.npy', [a, K, rpbins, pibinwidth, bin_arg, logwidth])
+    np.save('../results/amps/amps{}_topMrz0lin_frac{}.npy'.format(tag, frac), [a, K, rpbins, pibinwidth, bin_arg, logwidth])
 
     print rps
     print wprps
@@ -268,16 +265,60 @@ def run_est():
 
 
 def eval_amps():
-    vals = [-18,-19,-20,-21,-22,-23]
+    #vals = [-18,-19,-20,-21,-22,-23]
+    vals = [-18.5, -19.5, -20.5, -21.5, -22.5]
+    labels = ['M_rz={} '.format(val) for val in vals]
+    #vals = np.linspace(0.1, 0.9, 9)
+    #vals = np.arange(-18.5, -22.6, -0.1)
+    #labelarr = [-18.5, -19.5, -20.5, -21.5, -22.5]
+    #labels = ['M_rz={} '.format(val) if round(val,1) in labelarr else None for val in vals]
 
-    fn = '../results/amps/amps_square1k_topMrzlin.npy'
-    basisfuncs = [estimator_chunks.top_Mrz_lin]
+    #fn = '../results/amps/amps_square5k_topMrzall_frac0.5.npy'
+    fn = '../results/amps/amps_square5k_topMrzall.npy'
+    linear = True
+    #fn = '../results/amps/amps_square5k_topMrzall_rand.npy'
+    #fn = '../results/amps/amps_square1k_topMrzrandall.npy'
+    #basisfuncs = [estimator_chunks.top_rand]
+    basisfuncs = [estimator_chunks.top_Mrz]
+
     a, K, rpbins, pibinwidth, bin_arg, logwidth = np.load(fn)
     x = run.bins_logavg(rpbins)
 
     rps, wprps = run.calc_wprp(a, x, basisfuncs, K, rpbins, vals, pibinwidth, bin_arg, logwidth)
-    labels = ['bright0 square1k, M_rz={}'.format(val) for val in vals]
-    plotter.plot_wprp(rps, wprps, labels)
+
+    print len(rps)
+    print len(labels)
+    fn = 'plots_2019-01-29/wprp_Mrzlin_square5k_midpoints.png'
+    #fn = 'plots_2019-01-29/wprp_Mrzall_square5k_-22.5to-18.5.png'
+    plotter.plot_wprp(rps, wprps, labels, saveto=fn)
+
+
+def plot_bins():
+
+    #samplenums = [7,8,9,10,11]
+    #samplenums = [11, 10, 9, 8, 7]
+    samplenums = [11,10,9,8,7]
+    #samplenums = [7]
+    rps = []
+    wprps = []
+    labels = []
+    frac = 1
+    tag = '_square5k_noczcut'
+    #tag = '_square5k'
+    for samplenum in samplenums:
+        vals = None
+        fn = '../results/amps/amps_bin{}{}_top_frac{}.npy'.format(samplenum, tag, frac)
+        basisfuncs = [estimator_chunks.tophat]
+
+        a, K, rpbins, pibinwidth, bin_arg, logwidth = np.load(fn)
+        x = run.bins_logavg(rpbins)
+
+        rp, wprp = run.calc_wprp(a, x, basisfuncs, K, rpbins, vals, pibinwidth, bin_arg, logwidth)
+        rps += rp
+        wprps += wprp
+        labels.append('bin {}, {}'.format(samplenum, labels_mr[samplenum]))
+    fn = 'plots_2019-01-29/wprp_bins{}.png'.format(tag)
+    plotter.plot_wprp(rps, wprps, labels, saveto=fn)
 
 
 def run_sample_corrfunc(samplenum, tag, min_sep, max_sep, rpbins, pimax, wp, cosmo,
@@ -335,9 +376,45 @@ def get_random(df_data):
     return df_rand
 
 
+def samples_noczcut(samplenums):
+
+    for samplenum in samplenums:
+        print samplenum, labels_mr[samplenum]
+        fn = '../data/lss.dr72bright{}.dat'.format(samplenum)
+        df = pd.read_csv(fn, header=None, delim_whitespace=True, names=['indx',
+                        'sector', 'mregion', 'ra', 'dec', 'cz', 'fgotten', 'selection_fn'])
+        df['z'] = df['cz']/c_kms
+        print len(df.index)
+
+        fn_photo = '../data/photoinfo.dr72bright{}.dat'.format(samplenum)
+        df_photo = pd.read_csv(fn_photo, header=None, delim_whitespace=True, names=['indx',
+                        'M_u', 'M_g', 'M_r', 'M_i', 'M_z', 'mu_{50}', 'r50/r90'])
+
+        df = pd.merge(df, df_photo, on='indx') #This doesn't lose any data
+
+        print min(df['cz']), max(df['cz'])
+        q0 = 2.0
+        q1 = -1.0
+        qz0 = 0.1
+        curr_zdep = q0 * (1.0 + q1 * (df['z'] - qz0))
+        df['M_rz'] = df['M_r'] + curr_zdep * (df['z'] - qz0)
+        print min(df['M_rz']), max(df['M_rz'])
+
+        print len(df.index)
+
+        fn_save = '../data/lss.dr72bright{}_noczcut.dat'.format(samplenum)
+        df.to_csv(fn_save)
 
 
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("samplenum", help="number of sample to process",
+                        type=int)
+    args = parser.parse_args()
+    return args
 
 
 if __name__=="__main__":
-    main()
+    arguments = parse_arguments()
+    main(arguments.samplenum)

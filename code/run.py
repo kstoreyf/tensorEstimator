@@ -270,7 +270,10 @@ def calc_wprp(a, x, basisfunc, K, rpbins, vals, pibinwidth, *args):
             wprps.append(list(2*pibinwidth*xi_rp))
         else:
             for val in vals:
+
                 bases = basisfunc[bb](None, None, None, None, x, *args, val=val)
+                print bases
+                print a[bb]
                 #xi_rp = np.zeros_like(x)
                 #for k in range(len(bases)):
                 #    xi_rp += a[bb][k]*ba.arrayses[k]

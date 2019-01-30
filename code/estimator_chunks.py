@@ -246,23 +246,21 @@ def top_Mrz(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
     u = np.array([top(logrp, peak, logwidth) for peak in logbins_avg])
     if not val:
         val = 0.5*(cat1['M_rz'][i] + cat2['M_rz'][j])
-    u = np.concatenate((u, u*abs(val), u*abs(val)**2))
-    return u
-
-def top_Mrz_lin(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
-    logrp = np.log10(rp)
-    u = np.array([top(logrp, peak, logwidth) for peak in logbins_avg])
-    if not val:
-        val = 0.5*(cat1['M_rz'][i] + cat2['M_rz'][j])
-    u = u*abs(val)
-    return u
-
-def top_Mrz_0lin(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
-    logrp = np.log10(rp)
-    u = np.array([top(logrp, peak, logwidth) for peak in logbins_avg])
-    if not val:
-        val = 0.5*(cat1['M_rz'][i] + cat2['M_rz'][j])
+    #u = np.concatenate((u, u*abs(val), u*abs(val)**2))
     u = np.concatenate((u, u*abs(val)))
+    #u = u*abs(val)
+    return u
+
+def top_rand(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
+    logrp = np.log10(rp)
+    u = np.array([top(logrp, peak, logwidth) for peak in logbins_avg])
+    if not val:
+        nr1 = np.random.rand() * 17 - 30
+        nr2 = np.random.rand() * 17 - 30
+        val = 0.5 * (nr1 + nr2)
+        #val = 0.5*(np.random.rand() + np.random.rand())
+    #u = u*abs(val)
+    u = np.concatenate((u, u*abs(val), u*abs(val)**2))
     return u
 
 def gauss_Mr(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
