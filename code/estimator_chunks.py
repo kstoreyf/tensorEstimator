@@ -18,23 +18,22 @@ def est(ddpg, drpg, rdpg, rrpg, pimax, rmax, cosmo, basisfunc, K, wp, nproc, *ar
     nd2 = len(ddpg.cat2)
     nr2 = len(rrpg.cat2)
 
-
     if nproc==0:
         locs = None
         print 'Calculating dd vector'
-        dds = project_pairs(ddpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, False, None, *args)
+        dds = project_pairs(ddpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, False, None, None, *args)
         print dds
         # is d1 r2 right? cross?
         print 'Calculating dr vector'
-        drs = project_pairs(drpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, False, None, *args)
+        drs = project_pairs(drpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, False, None, None, *args)
         print drs
 
         print 'Calculating rd vector'
         # should check if need to compute both aka if d1==d2 (drs and rds should be same bc using symmetric defs of dcm)
-        rds = project_pairs(rdpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, False, None, *args)
+        rds = project_pairs(rdpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, False, None, None, *args)
 
         print 'Calculating rr vector'
-        rrs, qqs = project_pairs(rrpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, True, None, *args)
+        rrs, qqs = project_pairs(rrpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, True, None, None, *args)
         print rrs
 
     else:
@@ -45,47 +44,47 @@ def est(ddpg, drpg, rdpg, rrpg, pimax, rmax, cosmo, basisfunc, K, wp, nproc, *ar
 
         print mp.cpu_count(), nproc
 
+        bnum = len(basisfunc)
         count_arrs = [[] for _ in range(len(basisfunc))]
         for pg, tensor in pair_arrs:
+            count_arr = mp.Array('d', np.zeros(K*bnum))
+
+            if tensor:
+                count_tensor_arr = mp.Array('d', np.zeros(K*K*bnum))
+            else:
+                count_tensor_arr = None
 
             start = time.time()
-            outq = mp.Queue()
             subsize = int(np.ceil(float(len(pg.cat1))/float(nproc)))
 
             loc_arr = [(nn*subsize, min((nn+1)*subsize, len(pg.cat1))) for nn in range(nproc)]
             print loc_arr
 
-            pargs = [[pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor]+[outq]+list(args) for locs in loc_arr]
+            pargs = [[pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor]+[count_arr, count_tensor_arr]+list(args) for locs in loc_arr]
             processes = [mp.Process(target=project_pairs, args=parg) for parg in pargs]
             print 'Starting'
             for p in processes:
                 p.start()
             for p in processes:
                 p.join()
-            rez = [outq.get() for _ in processes]
 
-            for bb in range(len(basisfunc)):
-                counts_multi = np.zeros(K)
+            for bb in range(bnum):
+                print count_arr[bb*K:(bb+1)*K]
+                count_arrs[bb].append(np.array(count_arr[bb*K:(bb+1)*K]))
                 if tensor:
-                    counts_tensor_multi = np.zeros((K,K))
-                for rz in rez:
-                    if tensor:
-                        counts_multi += rz[0][bb]
-                        counts_tensor_multi += rz[1][bb]
-                    else:
-                        counts_multi += rz[bb]
-                count_arrs[bb].append(counts_multi)
-                if tensor:
-                    count_arrs[bb].append(counts_tensor_multi)
+                    count_arrs[bb].append(np.array(count_tensor_arr[bb*K*K:(bb+1)*K*K]).reshape(K,K))
+
             end = time.time()
-            print counts_multi
             print 'TIME:', end-start
-
 
     a = []
     for bb in range(len(basisfunc)):
         if nproc>0:
             dds, drs, rds, rrs, qqs = zip(*count_arrs)
+        print dds[bb]
+        print drs[bb]
+        print rrs[bb]
+        print qqs[bb]
         dd = dds[bb] * 1./(nd1*nd2)
         dr = drs[bb] * 1./(nd1*nr2)
         rd = rds[bb] * 1./(nd2*nr1)
@@ -112,7 +111,7 @@ def calc_amplitudes(dd, dr, rd, rr, qq):
     return a.A1
 
 
-def project_pairs(pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor, outq, *args):
+def project_pairs(pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor, count_arr, count_tensor_arr, *args):
 
     bnum = len(basisfunc)
     counts = [np.zeros(K) for _ in range(bnum)]
@@ -162,32 +161,18 @@ def project_pairs(pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor, outq, 
         #pairs = pg.get_neighbors(loc)
         loc += 1
 
-
     if tensor:
-        if outq:
-            outq.put([counts, counts_tensor])
-            #outq.put([counts, counts])
-            #outq.put(counts)
-            #print 'outq'
-            #print counts
-            #print counts_tensor
-            #counts_tensor = np.array(counts_tensor)
-            #print counts_tensor
-            #print counts_tensor.shape
-            #outq.put(counts_tensor[0][0])
-            #ctens = []
-            #for bb in range(bnum):
-              #ct = []
-              #for kk in range(K/2+1):
-              #  ctens.append(counts_tensor[bb][kk])
-              #ctens.append(ct)
-            #outq.put(ctens)
-            #outq.put([counts_tensor[0][0], counts_tensor[0][1]])
+        if count_arr:
+            for bb in range(bnum):
+                count_arr[bb*K:(bb+1)*K] += counts[bb]
+                ct = counts_tensor[bb].reshape(K*K)
+                count_tensor_arr[bb*K*K:(bb+1)*K*K] += ct
         else:
             return counts, counts_tensor
     else:
-        if outq:
-            outq.put(counts)
+        if count_arr:
+            for bb in range(bnum):
+                count_arr[bb*K:(bb+1)*K] += counts[bb]
         else:
             return counts
 
