@@ -23,7 +23,7 @@ Mr_lims =  {7: [-23, -22], 8: [-22, -21], 9: [-21, -20],
             21:-22, 20:-21.5, 19:-21, 18:-20.5, 17:-20, 16:-19.5,
             15:-19, 14:-18.5, 13:-18}
 pimaxs = {7: 60, 8: 60, 9: 60, 10: 60, 11: 40, 12: 40,
-          21: 60, 20: 60, 19:60, 18: 60, 17: 60, 16: 60, 15: 60, 14: 40, 13: 40, 0: 60}
+          21: 60, 20: 60, 19:60, 18: 60, 17: 60, 16: 60, 15: 60, 14: 40, 13: 40, 0: 60, 'bins':60}
 labels_mr = {7: r'$-23<M_r<-22$', 8: r'$-22<M_r<-21$', 9: r'$-21<M_r<-20$',
             10: r'$-20<M_r<-19$', 11: r'$-19<M_r<-18$', 12: r'$-18<M_r<-17$',
             21: r'$M_r<-22$', 20: r'$M_r<-21.5$', 19: r'$M_r<-21$', 18: r'$M_r<-20.5$',
@@ -51,7 +51,8 @@ def main(samplenum):
     #make_testsquare(samplenums)
     #make_testsquare([0])
     #write_randoms(samplenums)
-    run_est(samplenum)
+    #run_est(samplenum)
+    run_est_grid(samplenum)
     #eval_amps()
     #plot_bins()
 
@@ -183,8 +184,28 @@ def check_samples():
 
 def run_est(samplenum):
 
+    nproc = 10
+    frac = 1
+
     tag = '_square5k'
-    nproc = 16
+    basistag = 'topMrz0linsumnoabs'
+    basisfuncs = [estimator_chunks.top_Mrz]
+    Kfac = 2
+    vals = [-18.5, -19.5, -20.5, -21.5, -22.5]
+         
+    #tag = '_czcut'
+    #basistag = 'top'
+    #basisfuncs = [estimator_chunks.tophat]
+    #Kfac = 1
+    #vals = None
+     
+    if samplenum>0:
+      bintag = '_bin{}'.format(samplenum)+tag
+      fractag = str(frac)+'rand0.1'
+    else:
+      bintag = tag
+      fractag = frac
+    saveto = '../results/amps/amps{}_{}_frac{}.npy'.format(bintag, basistag, fractag)
 
     #Separations should be given in Mpc/h
     min_sep = 0.13
@@ -195,7 +216,7 @@ def run_est(samplenum):
     rpbins_avg = run.bins_logavg(rpbins)
     logrpbins_avg = run.logbins_avg(rpbins)
     logwidth = run.log_width(rpbins)
-    pimax = 60.
+    pimax = pimaxs[samplenum]
     pibinwidth = int(pimax)
 
     wp = True
@@ -211,13 +232,14 @@ def run_est(samplenum):
     data1 = run.add_info(data1)
     rand1 = run.add_info(rand1)
 
-    frac = 1
-    #data1 = data1.sample(frac=frac)
-    #rand1 = rand1.sample(frac=frac)
-    data1 = data1[:int(frac*len(data1.index))]
-    rand1 = rand1[:int(frac*len(rand1.index))]
+    data1 = data1.sample(frac=frac)
+    
+    if samplenum>0:
+      frac /= 10.
+    rand1 = rand1.sample(frac=frac)
+    #data1 = data1[:int(frac*len(data1.index))]
+    #rand1 = rand1[:int(frac*len(rand1.index))]
     print len(data1), len(rand1)
-
     data2 = data1
     rand2 = rand1
     ##################
@@ -225,8 +247,6 @@ def run_est(samplenum):
     #vals = [np.mean(data1['M_rz'])]
     #vals = np.linspace(min(data1['M_rz']), max(data1['M_rz']), 6)
     #vals = [-18, -18.5, -19, -19.5, -20]
-    vals = [-18.5, -19.5, -20.5, -21.5, -22.5]
-    print vals
     bin_arg = logrpbins_avg
 
     rps = []
@@ -242,55 +262,230 @@ def run_est(samplenum):
     # rps.append(rpbins_avg)
     # wprps.append(wprpcf)
 
-    #basisfuncs = [estimator_chunks.tophat]
-    #basisfuncs = [estimator_chunks.top_Mrz]
-    basisfuncs = [estimator_chunks.top_Mrz]
-    K *= 2
+    K *= Kfac
     print 'Running vecest'
     #rp, wprp = run.run(data1, rand1, data2, rand2, pimax, min_sep, max_sep,
     #                  bin_size, basisfuncs, K, cosmo, wp, rpbins, vals, pibinwidth, bin_arg, logwidth)
     rpsest, wprpsest, a = run.run_chunks(data1, rand1, data2, rand2, pimax, min_sep,
-                                max_sep, bin_size, basisfuncs, K, cosmo, wp, rpbins,
+                                max_sep, basisfuncs, K, cosmo, wp, rpbins,
                                 vals, pibinwidth, nproc, bin_arg, logwidth)
     rps += [rpbins_avg]*len(wprpsest)
     wprps += wprpsest
 
-    np.save('../results/amps/amps{}_topMrz0lin_frac{}.npy'.format(tag, frac), [a, K, rpbins, pibinwidth, bin_arg, logwidth])
+    print 'Saved to {}'.format(saveto)
+    np.save(saveto, [a, K, rpbins, pibinwidth, bin_arg, logwidth])
+
 
     print rps
     print wprps
-    labels = ['corrfunc'] + ['bright0 square1k, M_rz={}'.format(val) for val in vals]
+    #labels = ['corrfunc'] + ['bright0 square1k, M_rz={}'.format(val) for val in vals]
 
     #plotter.plot_wprp(rps, wprps, labels)
 
+def run_est_grid(samplenum):
+
+    nproc = 10
+    frac = 1
+
+    tag = '_square1k'
+    #basistag = 'gridMrz0lin'
+    #basisfuncs = [estimator_chunks.grid_Mrz]
+    #basistag = 'matchdimmest'
+    basistag = '_matchbrighter'
+    basisfuncs = [estimator_chunks.match_bins]
+    Kfac = 1
+    vals = [-18.5, -19.5, -20.5, -21.5, -22.5]
+    #savetag = '_binwidthdec'
+    savetag = ''
+    saveto = '../results/amps/amps{}{}{}_frac{}{}.npy'.format(samplenum, tag, basistag, frac, savetag)
+
+    #Separations should be given in Mpc/h
+    min_sep = 0.13
+    max_sep = 40. #Mpc/h
+    #K = 4
+    bin_size = 0.2
+    K = int((np.log10(max_sep) - np.log10(min_sep))/bin_size)
+    print 'K:', K
+    print 'Kfac:', Kfac
+
+    rpbins = np.logspace(np.log10(min_sep), np.log10(max_sep), K+1)
+    print 'rpbins:',rpbins
+    rpbins_avg = run.bins_logavg(rpbins)
+    logrpbins_avg = run.logbins_avg(rpbins)
+    logwidth = run.log_width(rpbins)
+    pimax = pimaxs[samplenum]
+    pibinwidth = int(pimax)
+
+    bin_arg = np.log10(rpbins)
+
+    wp = True
+    cosmo = LambdaCDM(H0=70, Om0=0.25, Ob0=0.045, Ode0=0.75)
+
+    ###############
+    print 'Load samples'
+    fn = '../data/lss.dr72bright{}{}.dat'.format(samplenum, tag)
+    data1 = pd.read_csv(fn)
+    fn_rand = '../data/random-0.dr72bright{}{}.dat'.format(samplenum, tag)
+    rand1 = pd.read_csv(fn_rand)
+    data1 = run.add_info(data1)
+    rand1 = run.add_info(rand1)
+
+    data1 = data1.sample(frac=frac)
+    rand1 = rand1.sample(frac=frac)
+    #data1 = data1[:int(frac*len(data1.index))]
+    #rand1 = rand1[:int(frac*len(rand1.index))]
+    print len(data1), len(rand1)
+    data2 = data1
+    rand2 = rand1
+    ##################
+
+    rps = []
+    wprps = []
+
+    K *= Kfac
+    print 'Running vecest'
+    rpsest, wprpsest, a = run.run_chunks(data1, rand1, data2, rand2, pimax, min_sep, max_sep, basisfuncs, K, cosmo, wp, rpbins, vals, pibinwidth, nproc, bin_arg, logwidth)
+    rps += [rpbins_avg] * len(wprpsest)
+    wprps += wprpsest
+
+    print 'Saving to {}'.format(saveto)
+    np.save(saveto, [a, K, rpbins, pibinwidth, bin_arg, logwidth])
+
+    print 'Rp, wprps, a'
+    print rps
+    print wprps
+    print a
+
+
 
 def eval_amps():
-    #vals = [-18,-19,-20,-21,-22,-23]
-    vals = [-18.5, -19.5, -20.5, -21.5, -22.5]
-    labels = ['M_rz={} '.format(val) for val in vals]
-    #vals = np.linspace(0.1, 0.9, 9)
-    #vals = np.arange(-18.5, -22.6, -0.1)
-    #labelarr = [-18.5, -19.5, -20.5, -21.5, -22.5]
-    #labels = ['M_rz={} '.format(val) if round(val,1) in labelarr else None for val in vals]
 
-    #fn = '../results/amps/amps_square5k_topMrzall_frac0.5.npy'
-    fn = '../results/amps/amps_square5k_topMrzall.npy'
-    linear = True
-    #fn = '../results/amps/amps_square5k_topMrzall_rand.npy'
-    #fn = '../results/amps/amps_square1k_topMrzrandall.npy'
+    # evalat = '_many'
+    # tag = '_square5k'
+    # basistag = '_topMrz0linsumnoabs'
+    # #basistag = '_toplogMrz0linmean'
+    # #basistag = 'topMrzallmean'
+    # basisfuncs = [estimator_chunks.top_Mrz]
+    # fractag = '_frac1'
+    # #extratag = '_valx0.5'
+    # #extratag = '_doublecheck'
+    # savetag = '
+    # '
+    # evalat = '_midpoints'
+    # tag = '_square1k'
+    # fractag = '_frac1'
+    # basistag = '_gridMrz0lin'
+    # basisfuncs = [estimator_chunks.grid_Mrz]
+    # extratag = '_binwidthdec'
+    # savetag = extratag
+
+    # samplenum = 11
+    # evalat = ''
+    # tag = '_bin{}_czcut'.format(samplenum)
+    # basistag = '_top'
+    # basisfuncs = [estimator_chunks.tophat]
+    # fractag = '_frac1rand0.1'
+    # savetag = ''
+
+    evalat = '_midpoints'
+    tag = '_square1k'
+    fractag = '_frac1'
+    #basistag = '_matchbins'
+    #basistag = '_matchbinsandrp2'
+    #basistag = '_matchbrighter'
+    #basistag = '_matchdimmest'
+    basistag = '_matchbins_rp4'
+    basisfuncs = [estimator_chunks.match_bins]
+    #extratag = '_binwidthdec'
+    extratag = ''
+    savetag = extratag
+    samplenum = 'bins'
+
+    fn = '../results/amps/amps{}{}{}{}{}.npy'.format(samplenum, tag, basistag, fractag, extratag)
+    saveto = 'plots_2019-02-06/wprp{}{}{}{}{}.png'.format(samplenum, tag, basistag, evalat, savetag)
+
+    #basisfuncs = [estimator_chunks.tophat]
     #basisfuncs = [estimator_chunks.top_rand]
-    basisfuncs = [estimator_chunks.top_Mrz]
+
+    if evalat=='_midpoints':
+        vals = [-18.5, -19.5, -20.5, -21.5, -22.5]
+
+        #vals = [-18.3, -18.75, -19.5, -21]
+        #vals = [-18.5, -20, -21.5]
+
+
+        labels = ['M_rz={} '.format(val) for val in vals]
+    elif evalat=='_many':
+        vals = np.arange(-18.5, -22.6, -0.1)
+        labelarr = [-18.5, -19.5, -20.5, -21.5, -22.5]
+        labels = ['M_rz={} '.format(val) if round(val,1) in labelarr else None for val in vals]
+    elif evalat=='':
+        vals = None
+        labels = ['bin{}'.format(samplenum)]
+
+
 
     a, K, rpbins, pibinwidth, bin_arg, logwidth = np.load(fn)
     x = run.bins_logavg(rpbins)
+    print ':::a:::'
+    print a
 
     rps, wprps = run.calc_wprp(a, x, basisfuncs, K, rpbins, vals, pibinwidth, bin_arg, logwidth)
 
     print len(rps)
     print len(labels)
-    fn = 'plots_2019-01-29/wprp_Mrzlin_square5k_midpoints.png'
+    #print rps
+    #print wprps
+
+    np.save('../results/wprps/wprp{}{}{}{}'.format(tag, basistag, fractag, evalat),
+            [rps, wprps, labels])
+    #fn = 'plots_2019-01-29/wprp_Mrzlin_square5k_midpoints.png'
     #fn = 'plots_2019-01-29/wprp_Mrzall_square5k_-22.5to-18.5.png'
-    plotter.plot_wprp(rps, wprps, labels, saveto=fn)
+    plotter.plot_wprp(rps, wprps, labels, saveto=saveto)
+
+
+def eval_amps_grid():
+
+    evalat = '_many'
+    tag = '_square1k'
+    basistag = '_topMrz0lingrid'
+    basisfuncs = [estimator_chunks.grid_Mrz]
+    fractag = '_frac1'
+    extratag = ''
+
+    fn = '../results/amps/amps{}{}{}.npy'.format(tag, basistag, fractag)
+    saveto = 'plots_2019-02-06/wprp{}{}{}{}.png'.format(tag, basistag, evalat, extratag)
+
+
+    if evalat=='_midpoints':
+        vals = [-18.5, -19.5, -20.5, -21.5, -22.5]
+        labels = ['M_rz={} '.format(val) for val in vals]
+    elif evalat=='_many':
+        vals = np.arange(-18.5, -22.6, -0.1)
+        labelarr = [-18.5, -19.5, -20.5, -21.5, -22.5]
+        labels = ['M_rz={} '.format(val) if round(val,1) in labelarr else None for val in vals]
+    elif evalat=='':
+        vals = None
+        labels = ['bin{}'.format(samplenum)]
+
+    a, K, rpbins, pibinwidth, bin_arg, logwidth = np.load(fn)
+    x = run.bins_logavg(rpbins)
+    print ':::a:::'
+    print a
+
+    rps, wprps = run.calc_wprp(a, x, basisfuncs, K, rpbins, vals, pibinwidth, bin_arg, logwidth)
+
+    print len(rps)
+    print len(labels)
+    print rps
+    print wprps
+
+    np.save('../results/wprps/wprp{}{}{}{}'.format(tag, basistag, fractag, evalat),
+            [rps, wprps, labels])
+    #fn = 'plots_2019-01-29/wprp_Mrzlin_square5k_midpoints.png'
+    #fn = 'plots_2019-01-29/wprp_Mrzall_square5k_-22.5to-18.5.png'
+    plotter.plot_wprp(rps, wprps, labels, saveto=saveto)
+
 
 
 def plot_bins():
@@ -409,8 +604,7 @@ def samples_noczcut(samplenums):
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("samplenum", help="number of sample to process",
-                        type=int)
+    parser.add_argument("samplenum", help="number of sample to process")
     args = parser.parse_args()
     return args
 

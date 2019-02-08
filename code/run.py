@@ -87,7 +87,7 @@ def main():
     #            bin_sep, basisfuncs, K, cosmo, wp, rpbins, vals, pibinwidth, bin_arg, logwidth)
 
     rpest, wprpest, a = run_chunks(data1, rand1, data2, rand2, pimax, rpmin, rpmax,
-                                   bin_sep, basisfuncs, K, cosmo, wp, rpbins, vals,
+                                   basisfuncs, K, cosmo, wp, rpbins, vals,
                                    pibinwidth, nproc, bin_arg, logwidth)
     rps += [rpbins_avg]*len(wprpest)
     wprps += list(wprpest)
@@ -214,7 +214,7 @@ def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
     return rps, wprps
 
 
-def run_chunks(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
+def run_chunks(data1, rand1, data2, rand2, pimax, rmin, rmax, basisfuncs,
                    K, cosmo, wp, rpbins, vals, pibinwidth, nproc, *args):
 
     ddgen = pairgen.PairGen(data1, data2, rmax, cosmo, wp)
@@ -261,23 +261,25 @@ def calc_wprp(a, x, basisfunc, K, rpbins, vals, pibinwidth, *args):
     wprps = []
     print 'WPRP'
     for bb in range(len(basisfunc)):
-
         if vals==None:
-            bases = basisfunc[bb](None, None, None, None, x, *args)
-            xi_rp = np.matmul(a[bb], bases)
+            bases = []
+            for xx in x:
+                bases.append(basisfunc[bb](None, None, None, None, xx, *args))
+            xi_rp = np.matmul(a[bb], np.array(bases).T)
             xi_rp = np.squeeze(np.asarray(xi_rp))
             rps.append(x)
             wprps.append(list(2*pibinwidth*xi_rp))
         else:
             for val in vals:
-
-                bases = basisfunc[bb](None, None, None, None, x, *args, val=val)
+                bases = []
+                for xx in x:
+                  bases.append(basisfunc[bb](None, None, None, None, xx, *args, val=val))
                 print bases
                 print a[bb]
                 #xi_rp = np.zeros_like(x)
                 #for k in range(len(bases)):
                 #    xi_rp += a[bb][k]*ba.arrayses[k]
-                xi_rp = np.matmul(a[bb], bases)
+                xi_rp = np.matmul(a[bb], np.array(bases).T)
                 xi_rp = np.squeeze(np.asarray(xi_rp))
                 rps.append(x)
                 wprps.append(list(2*pibinwidth*xi_rp))
@@ -317,7 +319,7 @@ def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo, weights_data=
                                              rand1['ra'].values, rand1['dec'].values, rand1['z'].values, rpbins, pimax,
                                              cosmo, weights_data=weights_data, weights_rand=weights_rand, comoving=True)
         est_ls, wprp = corrfunc.calc_wprp(dd, dr, rr, len(data1), len(rand1), pibinwidth=pibinwidth)
-        #est_ls = None
+        ##est_ls = None
         return rp_avg, wprp
 
 

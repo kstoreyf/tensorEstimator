@@ -154,10 +154,10 @@ def check_samples():
 def run_bins(min_sep, max_sep, bin_size, wp, saveto=None):
     #samplenums = [7, 8, 9, 10, 11, 12]
     #samplenums = [14, 16, 18, 19, 20, 21]
-    samplenums = [14]
+    samplenums = [10]
 
     frac = 1
-    saveto = "../results/dr72_bin{}_frac{}.npy".format(samplenums[0], frac)
+    saveto = "../results/dr72_bin{}_frac{}_pibinmaxweights1rand0.1n1.npy".format(samplenums[0], frac)
     print saveto
 
     cosmo = LambdaCDM(H0=70, Om0=0.25, Ob0=0.045, Ode0=0.75) 
@@ -167,7 +167,7 @@ def run_bins(min_sep, max_sep, bin_size, wp, saveto=None):
 
 
     rps = []
-    pibinwidth = 1 #Mpc/h
+    #pibinwidth = 1 #Mpc/h
     wprps = []
     labels = []
     cols = []
@@ -177,6 +177,7 @@ def run_bins(min_sep, max_sep, bin_size, wp, saveto=None):
         else:
             labels.append(samplenum)
         pimax = pimaxs[samplenum]
+        pibinwidth = pimax
         rp_avg, wprp = run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo,
                                   frac=frac, pibinwidth=pibinwidth)
         print samplenum
@@ -189,7 +190,7 @@ def run_bins(min_sep, max_sep, bin_size, wp, saveto=None):
     if saveto:
         run.save_results(saveto, rps, wprps, labels)
 
-    plotter.plot_wprp(rps, wprps, labels)
+    #plotter.plot_wprp(rps, wprps, labels)
     #plotter.plot_wprp(rps, wprps, labels, colors=cols)
 
 
@@ -263,6 +264,42 @@ def combine_samples(samplenums):
 
     return datadf, randdf
 
+def combine_bins(samplenums):
+    datas = []
+    rands = []
+    tag = '_square5k_noczcut'
+    for samplenum in samplenums:
+        print samplenum
+        fn = '../data/lss.dr72bright{}{}.dat'.format(samplenum, tag)
+        data = pd.read_csv(fn, index_col=0)
+        #rand = get_random(samplenum)
+        fnrand = '../data/random-0.dr72bright{}{}.dat'.format(samplenum, tag)
+        rand = pd.read_csv(fnrand, index_col=0)
+        print len(data)
+        print len(rand)
+        datas.append(data)
+        rands.append(rand)
+    datadf = pd.concat(datas, ignore_index=True)
+    randdf = pd.concat(rands, ignore_index=True)
+
+    frac = 1
+    datadf = datadf.sample(frac=frac).reset_index(drop=True)
+    randdf = randdf.sample(frac=frac).reset_index(drop=True)
+
+    datadf['M_rz'] = calc_Mrz(datadf['M_r'], datadf['z'])
+
+    print 'Nums'
+    print len(datadf.index)
+    print len(randdf.index)
+    #datadf = run.add_info(datadf, zfile=None)
+    #randdf = run.add_info(randdf, zfile=None)
+
+    fn_save = '../data/lss.dr72bright{}{}.dat'.format('bins', tag)
+    fnrand_save = '../data/random-0.dr72bright{}{}.dat'.format('bins', tag)
+
+    datadf.to_csv(fn_save)
+    randdf.to_csv(fnrand_save)
+
 
 def run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo, frac=1, bin_size=None, pibinwidth=2):
 
@@ -276,6 +313,8 @@ def run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo, frac=1, bi
     print 'nrand=', len(rand1.index)
 
     data1 = data1.sample(frac=frac)
+    print 'subsampling rands'
+    frac /= 10.
     rand1 = rand1.sample(frac=frac)
     # data1 = data1[:int(frac*len(data1.index))]
     # rand1 = rand1[:int(frac*len(rand1.index))]
@@ -289,8 +328,10 @@ def run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo, frac=1, bi
     start = time.time()
     #xi, dd, dr, rd, rr = run.run_treecorr(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp)
     #xi, dd, dr, rd, rr = run.run_treecorr_orig(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp)
-    weights_data = data1['fgotten']
-    weights_rand = rand1['fgotten']
+    #weights_data = data1['fgotten']
+    #weights_rand = rand1['fgotten']
+    weights_data = None
+    weights_rand = None
     rp_avg, wprp = run.run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo,
                                     weights_data=weights_data, weights_rand=weights_rand,
                                     pibinwidth=pibinwidth)

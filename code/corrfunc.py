@@ -32,7 +32,7 @@ def counts(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins, pimax,
         weights_rand = np.ones(nrand)
 
     cosmology = 1
-    nthreads = 4
+    nthreads = 24
     verbose = False
     weight_type = 'pair_product'
     output_rpavg = True
