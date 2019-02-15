@@ -10,7 +10,7 @@ from Corrfunc.utils import convert_3d_counts_to_cf
 from Corrfunc.utils import convert_rp_pi_counts_to_wp
 
 import pairs
-import pairgen
+import pairgenz
 import estimator_chunks
 import estimator
 import plotter
@@ -217,10 +217,10 @@ def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
 def run_chunks(data1, rand1, data2, rand2, pimax, rmin, rmax, basisfuncs,
                    K, cosmo, wp, rpbins, vals, pibinwidth, nproc, *args):
 
-    ddgen = pairgen.PairGen(data1, data2, rmax, cosmo, wp)
-    drgen = pairgen.PairGen(data1, rand2, rmax, cosmo, wp)
-    rdgen = pairgen.PairGen(data2, rand1, rmax, cosmo, wp)
-    rrgen = pairgen.PairGen(rand1, rand2, rmax, cosmo, wp)
+    ddgen = pairgenz.PairGen(data1, data2, rmax, cosmo, wp, pimax)
+    drgen = pairgenz.PairGen(data1, rand2, rmax, cosmo, wp, pimax)
+    rdgen = pairgenz.PairGen(data2, rand1, rmax, cosmo, wp, pimax)
+    rrgen = pairgenz.PairGen(rand1, rand2, rmax, cosmo, wp, pimax)
 
     a = estimator_chunks.est(ddgen, drgen, rdgen, rrgen, pimax, rmax, cosmo,
                                    basisfuncs, K, wp, nproc, *args)

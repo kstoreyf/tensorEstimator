@@ -23,7 +23,6 @@ def est(ddpg, drpg, rdpg, rrpg, pimax, rmax, cosmo, basisfunc, K, wp, nproc, *ar
         print 'Calculating dd vector'
         dds = project_pairs(ddpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, False, None, None, *args)
         print dds
-        # is d1 r2 right? cross?
         print 'Calculating dr vector'
         drs = project_pairs(drpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, False, None, None, *args)
         print drs
@@ -105,8 +104,6 @@ def calc_amplitudes(dd, dr, rd, rr, qq):
     print 'Calculating amplitudes'
     qqinv = np.matrix(qq).I
     numerator = dd - dr - rd + rr
-    print dd
-    print numerator
     a = np.matmul(qqinv, numerator)
     return a.A1
 
@@ -120,8 +117,7 @@ def project_pairs(pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor, count_
 
     dcm1 = pg.cat1['dcm_mpc'].values
     dcm2 = pg.cat2['dcm_mpc'].values
-    dcm1_transverse = pg.cat1['dcm_transverse_mpc'].values
-    dcm2_transverse = pg.cat2['dcm_transverse_mpc'].values
+
     h = cosmo.h
 
     if not locs:
@@ -149,6 +145,7 @@ def project_pairs(pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor, count_
             # Now this is rp if wp or just r if 3d
             if r<=rmax:
                 for bb in range(bnum):
+                    #print (i, j, r)
                     u_ij = basisfunc[bb](pg.cat1, pg.cat2, i, j, r, *args)
 
                     counts[bb] += u_ij
@@ -228,6 +225,19 @@ def tophat(cat1, cat2, i, j, rp, logbins_avg, logwidth):
     u = np.array([top(logrp, peak, logwidth) for peak in logbins_avg])
     return u
 
+def tophat_robust(cat1, cat2, i, j, rp, logbins, logwidth):
+
+    rp = np.log10(rp)
+    ins_rp = -1
+    for nn in range(len(logbins)-1):
+        if logbins[nn] <= rp and rp < logbins[nn+1]:
+            ins_rp = nn
+            break
+    u = np.zeros(len(logbins)-1)
+    if ins_rp>=0 and ins_rp<len(logbins)-1:
+        u[ins_rp] = 1
+    return u
+
 def tophat_fast(cat1, cat2, i, j, rp, logbins, logwidth):
     #print logbins
     #print rp
@@ -280,6 +290,10 @@ def top_Mrz(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
 # be sure inputting bin edges not centers/avgs
 def grid_Mrz(cat1, cat2, i, j, rp, logbins, logwidth, val=None):
 
+    Mrzbins = np.linspace(-23, -18, 6)
+
+    nrpbins = len(logbins)-1
+    nMrzbins = len(Mrzbins)-1
     # Calc Mrz val
     Mrsun = 4.46
     if not val:
@@ -293,18 +307,20 @@ def grid_Mrz(cat1, cat2, i, j, rp, logbins, logwidth, val=None):
 
     # Mrz bin
     ins_Mrz = -1
-    Mrzbins = np.array([-23,-19,-18])
-    #Mrzbins = np.linspace(-22, -18, 5)
     for mm in range(len(Mrzbins)-1):
       if Mrzbins[mm] <= val and val < Mrzbins[mm+1]:
         ins_Mrz = mm
         break  
 
     # rp bin
-    ins_rp = int((np.log10(rp) - min(logbins)) / logwidth)
+    rp = np.log10(rp)
+    ins_rp = -1
+    for nn in range(nrpbins):
+        if logbins[nn] <= rp and rp < logbins[nn+1]:
+            ins_rp = nn
+            break
 
-    nrpbins = len(logbins)-1
-    nMrzbins = len(Mrzbins)-1
+
     Kval = nrpbins*nMrzbins
     u = np.zeros(Kval)
 
@@ -316,17 +332,21 @@ def grid_Mrz(cat1, cat2, i, j, rp, logbins, logwidth, val=None):
 # be sure inputting bin edges not centers/avgs
 def match_bins(cat1, cat2, i, j, rp, logbins, logwidth, val=None):
 
-    #Mrzbins = np.linspace(-23, -18, 6)
+    Mrzbins = np.linspace(-23, -18, 6)
     #Mrzbins = np.array([-22,-21,-19,-18])
     #Mrzbins = np.array([-23,-19,-18])
     #Mrzbins = np.array([-23,-18])
     #Mrzbins = np.array([-19,-18])
-    Mrzbins = np.array([-22,-21])
+    #Mrzbins = np.array([-22,-21])
+    #Mrzbins = np.array([-23, -22])
+
+    nrpbins = len(logbins)-1
+    nMrzbins = len(Mrzbins)-1
     #samplenum = 11
     #print Mrzbins
     if val:
         ins_Mrz = -1
-        for mm in range(len(Mrzbins)-1):
+        for mm in range(nMrzbins):
           if Mrzbins[mm] <= val and val < Mrzbins[mm+1]:
             ins_Mrz = mm
             break
@@ -334,7 +354,7 @@ def match_bins(cat1, cat2, i, j, rp, logbins, logwidth, val=None):
         ins_Mrz = -1
         m1 = cat1['M_rz'].values[i]
         m2 = cat2['M_rz'].values[j]
-        for mm in range(len(Mrzbins) - 1):
+        for mm in range(nMrzbins):
             if Mrzbins[mm] <= m1 and m1 < Mrzbins[mm + 1] \
                     and Mrzbins[mm] <= m2 and m2 < Mrzbins[mm + 1]:
                 #if cz_lims[samplenum][0]...
@@ -342,10 +362,13 @@ def match_bins(cat1, cat2, i, j, rp, logbins, logwidth, val=None):
                 break
 
     # rp bin
-    ins_rp = int((np.log10(rp) - min(logbins)) / logwidth)
+    rp = np.log10(rp)
+    ins_rp = -1
+    for nn in range(nrpbins):
+        if logbins[nn] <= rp and rp < logbins[nn+1]:
+            ins_rp = nn
+            break
 
-    nrpbins = len(logbins)-1
-    nMrzbins = len(Mrzbins)-1
     Kval = nrpbins*nMrzbins
     u = np.zeros(Kval)
 
