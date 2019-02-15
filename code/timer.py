@@ -9,18 +9,45 @@ import estimator
 import pairs
 import estimator_chunks
 import pairgen
+import pairgenz
 
 #globals
 #ndata = [10, 31, 102, 307, 1012, 3158, 10015]
 #ndata = [10, 31, 102, 307, 1012]
-ndata = [10, 31]
+ndata = [10, 31, 102]
 #colors = ['blue', 'orange', 'black', 'green']
 #colors = ['red', 'orange', 'magenta']
 #colors = ['magenta']
 colors = ['red', 'orange', 'green', 'blue', 'purple']
+
 def main():
     #time_pairs()
-    plot()
+    #plot()
+    plotz()
+
+def plotz():
+
+    nds = []
+    nrs = []
+    ts = []
+    ls = []
+
+    ndmax = 102
+    nproc = 2
+    fn = '../results/times/times_zshells_n{}_nproc{}.npy'.format(ndmax, nproc)
+    saveto = 'plots_2019-02-15/times_zshells_n{}_nproc{}.png'.format(ndmax, nproc)
+
+    ndatas, nrands, time_arrs, labels, rps, wprps = np.load(fn)
+
+    nds += list(ndatas)
+    nrs += list(nrands)
+    ts += list(time_arrs)
+    ls += list(labels)
+    #ls += ['chunks, nproc={}'.format(nprocs[i])]
+
+    plot_times(nrs, ts, ls, saveto=saveto)
+    #plot_times(ndatas, time_arrs, labels)
+
 
 def plot():
     fns = ['../results/times_chunksonly_nproc4_n307.npy',
@@ -42,8 +69,7 @@ def plot():
         ls += ['chunks, nproc={}'.format(nprocs[i])]
 
     plot_times(nds, ts, ls)
-
-        #plot_times(ndatas, time_arrs, labels)
+    #plot_times(ndatas, time_arrs, labels)
 
 
 def time_est():
@@ -53,7 +79,8 @@ def time_est():
     times = np.zeros(len(ndata))
 
     K = 10
-    pimax = 40 #Mpc/h
+    pimax = 40. #Mpc/h
+
     rpmax = 40 #Mpc/h
     basisfunc = estimator.tophat
     rpbins = np.logspace(np.log10(0.1), np.log10(rpmax), K)
@@ -79,26 +106,31 @@ def time_est():
 
 def time_pairs():
 
-    max_only = True
-
-    times_tcp = np.zeros(len(ndata))
-    times_tc = np.zeros(len(ndata))
-    times_kd = np.zeros(len(ndata))
     times_cf = np.zeros(len(ndata))
-    times_est = np.zeros(len(ndata))
-    times_tot = np.zeros(len(ndata))
+    times_pg = np.zeros(len(ndata))
+    times_pgz = np.zeros(len(ndata))
+
+    rps = []
+    wprps = []
+    nrand = []
+
+    nproc = 2
 
     K = 10
     pimax = 40. #Mpc/h
-    rmin = 0.1
-    rmax = 10. #Mpc/h
-    basisfunc = [estimator.tophat]
-    bin_sep = np.log(rmax / rmin) / float(K)
+    pibinwidth = pimax
 
-    rpbins = np.logspace(np.log10(rmin), np.log10(rmax), K+1)
-    rpbins_avg = 0.5 * (rpbins[1:] + rpbins[:-1])
-    logrpbins_avg = np.log10(rpbins_avg)
-    logwidth = np.log10(rpbins_avg[1]) - np.log10(rpbins_avg[0])
+    min_sep = 0.1
+    max_sep = 10. #Mpc/h
+    basisfuncs = [estimator_chunks.tophat_robust]
+    #bin_sep = np.log(rmax / rmin) / float(K)
+
+    rpbins = np.logspace(np.log10(min_sep), np.log10(max_sep), K+1)
+    rpbins_avg = run.bins_logavg(rpbins)
+    logrpbins_avg = run.logbins_avg(rpbins)
+    logwidth = run.log_width(rpbins)
+
+    bin_arg = np.log10(rpbins)
 
     cosmo = LambdaCDM(H0=70, Om0=0.3, Ode0=0.7)
     wp = True
@@ -106,6 +138,7 @@ def time_pairs():
     for i in range(len(ndata)):
 
         nd = ndata[i]
+        print i, ndata
 
         data1fn = '../../lss/mangler/samples/a0.6452_0001.v5_ngc_ifield_ndata{}.rdzw'.format(nd)
         rand1fn = '../../lss/mangler/samples/a0.6452_rand20x.dr12d_cmass_ngc_ifield_ndata{}.rdz'.format(nd)
@@ -117,6 +150,8 @@ def time_pairs():
         data2 = pd.read_csv(data2fn)
         rand2 = pd.read_csv(rand2fn)
 
+        nrand.append(len(rand1))
+
         # should make so can take list
         print 'Adding info to dataframes'
         data1 = run.add_info(data1, zfile=None)
@@ -124,13 +159,14 @@ def time_pairs():
         data2 = run.add_info(data2, zfile=None)
         rand2 = run.add_info(rand2, zfile=None)
 
-        start0 = time.time()
-        # run.run_treecorr(data1, rand1, data2, rand2, rmin, rmax, bin_sep, pimax, wp)
-        xi, d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs = run.pairs_treecorr(
-            data1, rand1, data2, rand2, rmin, rmax, bin_sep, pimax, wp)
-        end0 = time.time()
-        print "Time treecorr pairs:", end0 - start0
-        times_tcp[i] = end0 - start0
+
+        # start0 = time.time()
+        # # run.run_treecorr(data1, rand1, data2, rand2, rmin, rmax, bin_sep, pimax, wp)
+        # xi, d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs = run.pairs_treecorr(
+        #     data1, rand1, data2, rand2, rmin, rmax, bin_sep, pimax, wp)
+        # end0 = time.time()
+        # print "Time treecorr pairs:", end0 - start0
+        # times_tcp[i] = end0 - start0
         #
         # start1 = time.time()
         # #run.run_treecorr_orig(data1, rand1, data2, rand2, rmin, rmax, bin_sep, pimax, wp)
@@ -145,46 +181,60 @@ def time_pairs():
         # print "Time pairs:", end2 - start2
         # times_kd[i] = end2 - start2
 
-        # start3 = time.time()
-        # run.run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax)
-        # end3 = time.time()
-        # print "Time corrfunc:", end3 - start3
-        # times_cf[i] = end3 - start3
+        start = time.time()
+        rp, wprp = run.run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax,
+                                  cosmo, nproc=nproc, pibinwidth=int(pibinwidth))
+        end = time.time()
+        print "Time corrfunc:", end - start
+        times_cf[i] = end - start
+        rps.append(logrpbins_avg)
+        wprps.append(wprp)
 
-        start4 = time.time()
-        a = estimator.est_multi(d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs,
-                          data1, rand1, data2, rand2, pimax, rmax, cosmo,
-                          basisfunc, K, wp, logrpbins_avg, logwidth)
-        end4 = time.time()
-        print "Time corrfunc:", end4 - start4
-        times_est[i] = end4 - start4
+        vals = None
 
-        start4 = time.time()
-        ddgen = pairgen.PairGen(data1, data2, rmax, cosmo, wp)
-        drgen = pairgen.PairGen(data1, rand2, rmax, cosmo, wp)
-        rdgen = pairgen.PairGen(data2, rand1, rmax, cosmo, wp)
-        rrgen = pairgen.PairGen(rand1, rand2, rmax, cosmo, wp)
-        a = estimator_chunks.est_multi(ddgen, drgen, rdgen, rrgen, pimax, rmax,
-                                    cosmo, basisfunc, K, wp, logrpbins_avg, logwidth)
-        end4 = time.time()
-        print "Time chunks:", end4 - start4
-        times_tot[i] = end4 - start4
+        start = time.time()
+        ddgen = pairgen.PairGen(data1, data2, max_sep, cosmo, wp)
+        drgen = pairgen.PairGen(data1, rand2, max_sep, cosmo, wp)
+        rdgen = pairgen.PairGen(data2, rand1, max_sep, cosmo, wp)
+        rrgen = pairgen.PairGen(rand1, rand2, max_sep, cosmo, wp)
+        a = estimator_chunks.est(ddgen, drgen, rdgen, rrgen, pimax, max_sep,
+                                    cosmo, basisfuncs, K, wp, nproc, bin_arg, logwidth)
+        rp, wprp = run.calc_wprp(a,rpbins_avg, basisfuncs, K, rpbins, vals, pibinwidth, bin_arg, logwidth)
+        rps.append(rp)
+        wprps.append(wprp)
+        end = time.time()
+        print "Time chunks:", end - start
+        times_pg[i] = end - start
 
-        #times_tot[i] = times_tcp[i] + times_est[i]
+        start = time.time()
+        ddgen = pairgenz.PairGen(data1, data2, max_sep, cosmo, wp, pimax)
+        drgen = pairgenz.PairGen(data1, rand2, max_sep, cosmo, wp, pimax)
+        rdgen = pairgenz.PairGen(data2, rand1, max_sep, cosmo, wp, pimax)
+        rrgen = pairgenz.PairGen(rand1, rand2, max_sep, cosmo, wp, pimax)
+        a = estimator_chunks.est(ddgen, drgen, rdgen, rrgen, pimax, max_sep, cosmo,
+                                 basisfuncs, K, wp, nproc, bin_arg, logwidth)
+        rp, wprp = run.calc_wprp(a,rpbins_avg, basisfuncs, K, rpbins, vals, pibinwidth, bin_arg, logwidth)
+        rps.append(rp)
+        wprps.append(wprp)
+        end = time.time()
+        print "Time chunks:", end - start
+        times_pgz[i] = end - start
 
 
     # time_arrs = [times_tc, times_kd]
     # labels = ['treecorr', 'kdtree']
-    time_arrs = [times_tcp, times_est, times_tot]
+    time_arrs = [times_cf, times_pg, times_pgz]
     ndatas = [ndata]*len(time_arrs)
-    labels = ['treecorr pairs', 'estimator', 'chunks']
+    nrands = [nrand]*len(time_arrs)
 
-    np.save('../results/times_chunks_n{}.npy'.format(max(ndata)), [ndatas, time_arrs, labels])
+    labels = ['corrfunc', 'pairgen', 'pairgen zshells']
 
-    plot_times(ndata, time_arrs, labels)
+    np.save('../results/times/times_zshells_n{}_nproc{}.npy'.format(max(ndata), nproc), [ndatas, nrands, time_arrs, labels, rps, wprps])
+
+    #plot_times(ndata, time_arrs, labels)
 
 
-def plot_times(ndatas, time_arrs, labels):
+def plot_times(ndatas, time_arrs, labels, saveto=None):
 
     plt.figure()
 
@@ -203,9 +253,11 @@ def plot_times(ndatas, time_arrs, labels):
 
     plt.legend(loc='best')
 
-    plt.xlabel(r'log(n$_{data}$)')
+    plt.xlabel(r'log(n$_{rand}$)')
     plt.ylabel('log(seconds)')
 
+    if saveto:
+        plt.savefig(saveto)
     plt.show()
 
 

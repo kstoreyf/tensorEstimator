@@ -10,7 +10,7 @@ from astropy.cosmology import LambdaCDM
 
 
 def counts(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins, pimax,
-         cosmo, weights_data=None, weights_rand=None, comoving=False, zspace=False):
+         cosmo, nproc=1, weights_data=None, weights_rand=None, comoving=False, zspace=False):
 
     assert(len(ra_data)==len(dec_data) and len(ra_data)==len(z_data))
     assert(len(ra_rand)==len(dec_rand) and len(ra_rand)==len(z_rand))
@@ -32,7 +32,7 @@ def counts(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins, pimax,
         weights_rand = np.ones(nrand)
 
     cosmology = 1
-    nthreads = 24
+    nthreads = nproc
     verbose = False
     weight_type = 'pair_product'
     output_rpavg = True
