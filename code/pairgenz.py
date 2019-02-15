@@ -49,7 +49,7 @@ class PairGen():
     def get_neighbors(self, cat1loc):
 
         i = cat1loc
-        zshell = self.cat1['zshell'].values[i]
+        zshell = self.cat1zshells.values[i]
         tree = self.trees[zshell]
         treecat = self.treecats[zshell]
 
@@ -118,7 +118,7 @@ class PairGen():
 
         self.zedges = zedges
 
-        self.cat1['zshell'] = self.cat1['dcm_mpc'].apply(self.pick_zshell,
+        self.cat1zshells = self.cat1['dcm_mpc'].apply(self.pick_zshell,
                                                     args=(self.cosmo.h, zedges, dshell))
 
         # this splits up cat1 by which shell they belong to - but don't think
@@ -160,15 +160,15 @@ class PairGen():
             zshell = zedges[i]
             if zshell[0] <= dcmh < zshell[1] and abs(dcmh - zshell[0]) > dshell / 4. \
                     and abs(dcmh - zshell[1]) > dshell / 4.:
-                #print dcmh, zshell[0], zshell[1]
+                #print dcmh, zshell[0], zshell[1], i
                 return i
         # edge cases
         if zedges[0][0] <= dcmh < zedges[0][1]:
-            #print dcmh, zedges[0][0], zedges[0][1]
+            #print dcmh, zedges[0][0], zedges[0][1], 0, 'first'
             return 0
         last = len(zedges) - 1
         if zedges[last][0] <= dcmh < zedges[last][1]:
-            #print dcmh, zedges[last][0], zedges[last][1]
+            #print dcmh, zedges[last][0], zedges[last][1], last, 'last'
             return last
         print 'Error: not sorted into redshift shell'
         return None
