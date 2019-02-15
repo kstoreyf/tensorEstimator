@@ -12,8 +12,9 @@ color_list = ['magenta', 'red', 'black', 'limegreen', 'blue', 'cyan']
 #color_list = ['magenta', 'red', 'limegreen', 'blue', 'cyan']
 
 def main():
-    plot_dr72bins()
+    #plot_dr72bins()
     #plot()
+    plot_bins()
 
 def plot():
     #fn = "../results/dr72_brightLRG_frac0.1.npy"
@@ -70,6 +71,31 @@ def plot_dr72bins():
     plot_wprp(rps, wprps, labels)
 
 
+
+def plot_bins():
+    #samplenums = [7,8,9,10,11]
+    samplenums = [11,10,9,8,7]
+    #samplenums = [7]
+    rps = []
+    wps = []
+    labels = []
+    for samplenum in samplenums:
+        fn = '../results/wprps/wprp_bin{}_square5k_toprobust.npy'.format(samplenum)
+        hi = np.load(fn)
+        print hi
+        # print '0',hi[0]
+        # print '1',hi[1]
+        # print
+        # rp = hi[2]
+        # wprp = hi[0][0]
+        # print rp
+        # print wprp
+        rp, wprp, label = np.load(fn)
+        rps_paper = [0.17, 0.27, 0.42, 0.67, 1.1, 1.7, 2.7, 4.2, 6.7, 10.6, 16.9, 26.8]
+        rps.append(rps_paper)
+        wps.append(wprp[0])
+        labels.append('bin'+str(samplenum))
+    plot_wprp(rps, wps, labels)
 
 
 def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None, saveto=None):
