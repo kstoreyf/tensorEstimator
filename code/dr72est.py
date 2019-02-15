@@ -184,28 +184,33 @@ def check_samples():
 
 def run_est(samplenum):
 
-    nproc = 10
+    nproc = 24
     frac = 1
 
-    tag = '_square5k'
-    basistag = 'topMrz0linsumnoabs'
-    basisfuncs = [estimator_chunks.top_Mrz]
-    Kfac = 2
-    vals = [-18.5, -19.5, -20.5, -21.5, -22.5]
+    #tag = '_square5k'
+    #basistag = 'topMrz0linsumnoabs'
+    #basisfuncs = [estimator_chunks.top_Mrz]
+    #Kfac = 2
+    #vals = [-18.5, -19.5, -20.5, -21.5, -22.5]
          
     #tag = '_czcut'
     #basistag = 'top'
     #basisfuncs = [estimator_chunks.tophat]
     #Kfac = 1
     #vals = None
+    
+    tag = '_square5k'
+    basistag = '_toprobust'
+    basisfuncs = [estimator_chunks.tophat_robust]
+    Kfac = 1
+    vals = None
      
-    if samplenum>0:
-      bintag = '_bin{}'.format(samplenum)+tag
-      fractag = str(frac)+'rand0.1'
+    if samplenum=='bins':
+      bintag = '_bins'
     else:
-      bintag = tag
-      fractag = frac
-    saveto = '../results/amps/amps{}_{}_frac{}.npy'.format(bintag, basistag, fractag)
+      bintag = '_bin{}'.format(samplenum)
+    fractag = '_frac'.format(frac)
+    saveto = '../results/amps/amps{}{}{}{}.npy'.format(bintag, tag, basistag, fractag)
 
     #Separations should be given in Mpc/h
     min_sep = 0.13
@@ -216,7 +221,11 @@ def run_est(samplenum):
     rpbins_avg = run.bins_logavg(rpbins)
     logrpbins_avg = run.logbins_avg(rpbins)
     logwidth = run.log_width(rpbins)
-    pimax = pimaxs[samplenum]
+
+    bin_arg = np.log10(rpbins)
+    #bin_arg = logrpbins_avg
+    #this will not work for non-int samplenum (aka 'bins')
+    pimax = pimaxs[int(samplenum)]
     pibinwidth = int(pimax)
 
     wp = True
@@ -229,13 +238,14 @@ def run_est(samplenum):
     data1 = pd.read_csv(fn)
     fn_rand = '../data/random-0.dr72bright{}{}.dat'.format(samplenum, tag)
     rand1 = pd.read_csv(fn_rand)
+
     data1 = run.add_info(data1)
     rand1 = run.add_info(rand1)
 
     data1 = data1.sample(frac=frac)
     
-    if samplenum>0:
-      frac /= 10.
+    #if samplenum>0:
+    #  frac /= 10.
     rand1 = rand1.sample(frac=frac)
     #data1 = data1[:int(frac*len(data1.index))]
     #rand1 = rand1[:int(frac*len(rand1.index))]
@@ -247,7 +257,6 @@ def run_est(samplenum):
     #vals = [np.mean(data1['M_rz'])]
     #vals = np.linspace(min(data1['M_rz']), max(data1['M_rz']), 6)
     #vals = [-18, -18.5, -19, -19.5, -20]
-    bin_arg = logrpbins_avg
 
     rps = []
     wprps = []
@@ -284,25 +293,31 @@ def run_est(samplenum):
 
 def run_est_grid(samplenum):
 
-    nproc = 10
+    nproc = 24
     frac = 1
 
-    tag = '_square1k'
+    tag = '_square5k'
     #basistag = 'gridMrz0lin'
-    #basisfuncs = [estimator_chunks.grid_Mrz]
+    basisfuncs = [estimator_chunks.grid_Mrz]
+    basistag = '_gridmean'
     #basistag = 'matchdimmest'
-    basistag = '_matchbrighter'
-    basisfuncs = [estimator_chunks.match_bins]
-    Kfac = 1
+    #basistag = '_multitest'
+    #basistag = '_matchbins'
+    #basisfuncs = [estimator_chunks.match_bins]
+    Kfac = 5
     vals = [-18.5, -19.5, -20.5, -21.5, -22.5]
     #savetag = '_binwidthdec'
-    savetag = ''
-    saveto = '../results/amps/amps{}{}{}_frac{}{}.npy'.format(samplenum, tag, basistag, frac, savetag)
+    if samplenum=='bins':
+      bintag = '_bins'
+    else:
+      bintag = '_bin{}'.format(samplenum)
+    fractag = '_frac{}'.format(frac)
+    saveto = '../results/amps/amps{}{}{}{}.npy'.format(bintag, tag, basistag, fractag) 
 
     #Separations should be given in Mpc/h
     min_sep = 0.13
     max_sep = 40. #Mpc/h
-    #K = 4
+    #K = 100
     bin_size = 0.2
     K = int((np.log10(max_sep) - np.log10(min_sep))/bin_size)
     print 'K:', K
@@ -313,7 +328,10 @@ def run_est_grid(samplenum):
     rpbins_avg = run.bins_logavg(rpbins)
     logrpbins_avg = run.logbins_avg(rpbins)
     logwidth = run.log_width(rpbins)
-    pimax = pimaxs[samplenum]
+    if samplenum == 'bins':
+        pimax = pimaxs[samplenum]
+    else:
+        pimax = pimaxs[int(samplenum)]
     pibinwidth = int(pimax)
 
     bin_arg = np.log10(rpbins)
@@ -330,10 +348,10 @@ def run_est_grid(samplenum):
     data1 = run.add_info(data1)
     rand1 = run.add_info(rand1)
 
-    data1 = data1.sample(frac=frac)
-    rand1 = rand1.sample(frac=frac)
-    #data1 = data1[:int(frac*len(data1.index))]
-    #rand1 = rand1[:int(frac*len(rand1.index))]
+    #data1 = data1.sample(frac=frac)
+    #rand1 = rand1.sample(frac=frac)
+    data1 = data1[:int(frac*len(data1.index))]
+    rand1 = rand1[:int(frac*len(rand1.index))]
     print len(data1), len(rand1)
     data2 = data1
     rand2 = rand1
