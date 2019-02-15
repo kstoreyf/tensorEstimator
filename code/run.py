@@ -298,8 +298,8 @@ def calc_wprp_orig(a, basisfunc, K, rpbins, *args):
     return rpbins_avg, wprp
 
 
-def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo, weights_data=None,
-                 weights_rand=None, pibinwidth=1, zspace=False):
+def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo, nproc=1,
+                 weights_data=None, weights_rand=None, pibinwidth=1, zspace=False):
     print 'Running corrfunc'
     #can only do autocorrelations right now
 
@@ -310,14 +310,14 @@ def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo, weights_data=
     if zspace:
         dd, dr, rr = corrfunc.counts(data1['ra'].values, data1['dec'].values, data1['z'].values,
                                      rand1['ra'].values, rand1['dec'].values, rand1['z'].values, rpbins, pimax,
-                                     cosmo, weights_data=weights_data, weights_rand=weights_rand, comoving=True, zspace=True)
+                                     cosmo, nproc=nproc, weights_data=weights_data, weights_rand=weights_rand, comoving=True, zspace=True)
         xi = convert_3d_counts_to_cf(ndata, ndata, nrand, nrand, dd, dr, dr, rr)
         rp_avg = 0.5*(rpbins[1:]+rpbins[:-1])
         return rp_avg, xi
     else:
         dd, dr, rr, rp_avg = corrfunc.counts(data1['ra'].values, data1['dec'].values, data1['z'].values,
                                              rand1['ra'].values, rand1['dec'].values, rand1['z'].values, rpbins, pimax,
-                                             cosmo, weights_data=weights_data, weights_rand=weights_rand, comoving=True)
+                                             cosmo, nproc=nproc, weights_data=weights_data, weights_rand=weights_rand, comoving=True)
         est_ls, wprp = corrfunc.calc_wprp(dd, dr, rr, len(data1), len(rand1), pibinwidth=pibinwidth)
         ##est_ls = None
         return rp_avg, wprp
