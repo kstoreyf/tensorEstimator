@@ -205,6 +205,7 @@ def run_est(samplenum):
     #basisfuncs = [estimator_chunks.tophat]
     #Kfac = 1
     #vals = None
+     
 
     if samplenum=='bins':
       bintag = '_bins'
@@ -223,10 +224,13 @@ def run_est(samplenum):
     rpbins_avg = run.bins_logavg(rpbins)
     logrpbins_avg = run.logbins_avg(rpbins)
     logwidth = run.log_width(rpbins)
+
+    bin_arg = np.log10(rpbins)
+    #bin_arg = logrpbins_avg
+    #this will not work for non-int samplenum (aka 'bins')
     pimax = pimaxs[int(samplenum)]
     pibinwidth = int(pimax)
 
-    bin_arg = np.log10(rpbins)
     #bin_arg = logrpbins_avg
 
     wp = True
@@ -239,6 +243,7 @@ def run_est(samplenum):
     data1 = pd.read_csv(fn)
     fn_rand = '../data/random-0.dr72bright{}{}.dat'.format(samplenum, tag)
     rand1 = pd.read_csv(fn_rand)
+
     data1 = run.add_info(data1)
     rand1 = run.add_info(rand1)
 
@@ -293,27 +298,33 @@ def run_est(samplenum):
 
 def run_est_grid(samplenum):
 
-    nproc = 1
-    frac = 0.01
+    nproc = 24
+    frac = 1
 
-    tag = '_square1k'
+    tag = '_square5k'
     #basistag = 'gridMrz0lin'
-    #basisfuncs = [estimator_chunks.grid_Mrz]
+    basisfuncs = [estimator_chunks.grid_Mrz]
+    basistag = '_gridmean'
     #basistag = 'matchdimmest'
-    basistag = '_matchbrighter'
-    basisfuncs = [estimator_chunks.match_bins]
-    Kfac = 1
+    #basistag = '_multitest'
+    #basistag = '_matchbins'
+    #basisfuncs = [estimator_chunks.match_bins]
+    Kfac = 5
     vals = [-18.5, -19.5, -20.5, -21.5, -22.5]
     #savetag = '_binwidthdec'
-    savetag = ''
-    saveto = '../results/amps/amps{}{}{}_frac{}{}.npy'.format(samplenum, tag, basistag, frac, savetag)
+    if samplenum=='bins':
+      bintag = '_bins'
+    else:
+      bintag = '_bin{}'.format(samplenum)
+    fractag = '_frac{}'.format(frac)
+    saveto = '../results/amps/amps{}{}{}{}.npy'.format(bintag, tag, basistag, fractag) 
 
     #Separations should be given in Mpc/h
     min_sep = 0.13
     max_sep = 40. #Mpc/h
-    K = 100
-    #bin_size = 0.2
-    #K = int((np.log10(max_sep) - np.log10(min_sep))/bin_size)
+    #K = 100
+    bin_size = 0.2
+    K = int((np.log10(max_sep) - np.log10(min_sep))/bin_size)
     print 'K:', K
     print 'Kfac:', Kfac
     print 'frac:', frac
@@ -323,7 +334,10 @@ def run_est_grid(samplenum):
     rpbins_avg = run.bins_logavg(rpbins)
     logrpbins_avg = run.logbins_avg(rpbins)
     logwidth = run.log_width(rpbins)
-    pimax = pimaxs[samplenum]
+    if samplenum == 'bins':
+        pimax = pimaxs[samplenum]
+    else:
+        pimax = pimaxs[int(samplenum)]
     pibinwidth = int(pimax)
 
     bin_arg = np.log10(rpbins)
@@ -340,8 +354,8 @@ def run_est_grid(samplenum):
     data1 = run.add_info(data1)
     rand1 = run.add_info(rand1)
 
-    # data1 = data1.sample(frac=frac)
-    # rand1 = rand1.sample(frac=frac)
+    #data1 = data1.sample(frac=frac)
+    #rand1 = rand1.sample(frac=frac)
     data1 = data1[:int(frac*len(data1.index))]
     rand1 = rand1[:int(frac*len(rand1.index))]
     print len(data1), len(rand1)

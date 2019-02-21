@@ -56,7 +56,8 @@ def est(ddpg, drpg, rdpg, rrpg, pimax, rmax, cosmo, basisfunc, K, wp, nproc, *ar
             start = time.time()
             subsize = int(np.ceil(float(len(pg.cat1))/float(nproc)))
 
-            loc_arr = [(nn*subsize, min((nn+1)*subsize, len(pg.cat1))) for nn in range(nproc)]
+            #loc_arr = [(nn*subsize, min((nn+1)*subsize, len(pg.cat1))) for nn in range(nproc)]
+            loc_arr = split(range(len(pg.cat1)), nproc)
             print loc_arr
 
             pargs = [[pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor]+[count_arr, count_tensor_arr]+list(args) for locs in loc_arr]
@@ -97,7 +98,8 @@ def est(ddpg, drpg, rdpg, rrpg, pimax, rmax, cosmo, basisfunc, K, wp, nproc, *ar
 
 def split(a, n):
     k, m = divmod(len(a), n)
-    return list((a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in xrange(n)))
+    return [(i * k + min(i, m), (i + 1) * k + min(i + 1, m)) for i in xrange(n)]
+    #return list((a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in xrange(n)))
 
 
 def calc_amplitudes(dd, dr, rd, rr, qq):
@@ -249,6 +251,19 @@ def tophat_fast(cat1, cat2, i, j, rp, logbins, logwidth):
         u[ins] = 1
     return u
 
+def tophat_robust(cat1, cat2, i, j, rp, logbins, logwidth):
+    
+    rp = np.log10(rp)
+    ins_rp = -1
+    for nn in range(len(logbins)-1):
+        if logbins[nn] <= rp and rp < logbins[nn+1]:
+            ins_rp = nn
+            break 
+    u = np.zeros(len(logbins)-1)
+    if ins_rp>=0 and ins_rp<len(logbins)-1:
+        u[ins_rp] = 1
+    return u
+
 #def quad(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None)
 
 def top_z(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
@@ -291,7 +306,6 @@ def top_Mrz(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None):
 def grid_Mrz(cat1, cat2, i, j, rp, logbins, logwidth, val=None):
 
     Mrzbins = np.linspace(-23, -18, 6)
-
     nrpbins = len(logbins)-1
     nMrzbins = len(Mrzbins)-1
     # Calc Mrz val
@@ -305,21 +319,23 @@ def grid_Mrz(cat1, cat2, i, j, rp, logbins, logwidth, val=None):
         mval = Mrsun - 2.5*np.log10(lval)
         val = mval
 
+    nrpbins = len(logbins)-1
+    nMrzbins = len(Mrzbins)-1
     # Mrz bin
     ins_Mrz = -1
-    for mm in range(len(Mrzbins)-1):
+    for mm in range(nMrzbins):
       if Mrzbins[mm] <= val and val < Mrzbins[mm+1]:
         ins_Mrz = mm
         break  
 
     # rp bin
+    #ins_rp = int((np.log10(rp) - min(logbins)) / logwidth)
     rp = np.log10(rp)
     ins_rp = -1
     for nn in range(nrpbins):
         if logbins[nn] <= rp and rp < logbins[nn+1]:
             ins_rp = nn
-            break
-
+            break 
 
     Kval = nrpbins*nMrzbins
     u = np.zeros(Kval)
@@ -333,9 +349,11 @@ def grid_Mrz(cat1, cat2, i, j, rp, logbins, logwidth, val=None):
 def match_bins(cat1, cat2, i, j, rp, logbins, logwidth, val=None):
 
     Mrzbins = np.linspace(-23, -18, 6)
-    #Mrzbins = np.array([-22,-21,-19,-18])
-    #Mrzbins = np.array([-23,-19,-18])
-    #Mrzbins = np.array([-23,-18])
+    #Mrzbins = np.array([-19,-18]) #11
+    ##Mrzbins = np.array([-20,-19]) #10
+    #Mrzbins = np.array([-21,-20]) #9
+    #Mrzbins = np.array([-22,-21]) #8
+    Mrzbins = np.array([-23,-22]) #7
     #Mrzbins = np.array([-19,-18])
     #Mrzbins = np.array([-22,-21])
     #Mrzbins = np.array([-23, -22])
@@ -362,6 +380,7 @@ def match_bins(cat1, cat2, i, j, rp, logbins, logwidth, val=None):
                 break
 
     # rp bin
+    #ins_rp = int((np.log10(rp) - min(logbins)) / logwidth)
     rp = np.log10(rp)
     ins_rp = -1
     for nn in range(nrpbins):
