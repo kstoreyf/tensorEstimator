@@ -44,7 +44,6 @@ def main(samplenum):
 
     #run_dr72()
     #check_samples()
-    #run_dr7_LRGs()
     #fix_results()
     #read_dat(0)
     #plot_survey()

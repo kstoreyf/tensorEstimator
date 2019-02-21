@@ -148,7 +148,7 @@ def project_pairs(pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor, count_
             if r<=rmax:
                 for bb in range(bnum):
                     #print (i, j, r)
-                    u_ij = basisfunc[bb](pg.cat1, pg.cat2, i, j, r, *args)
+                    u_ij = basisfunc[bb](pg.cat1, pg.cat2, i, j, r, pi, *args)
 
                     counts[bb] += u_ij
 
@@ -263,6 +263,23 @@ def tophat_robust(cat1, cat2, i, j, rp, logbins, logwidth):
     if ins_rp>=0 and ins_rp<len(logbins)-1:
         u[ins_rp] = 1
     return u
+
+
+def tophat_xis(cat1, cat2, i, j, rp, pi, bins, width):
+    if pi:
+        s = np.sqrt(rp**2 + pi**2)
+    else:
+        s = rp
+    ins_s = -1
+    for nn in range(len(bins) - 1):
+        if bins[nn] <= s and s < bins[nn + 1]:
+            ins_s = nn
+            break
+    u = np.zeros(len(bins) - 1)
+    if ins_s >= 0 and ins_s < len(bins) - 1:
+        u[ins_s] = 1
+    return u
+
 
 #def quad(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None)
 

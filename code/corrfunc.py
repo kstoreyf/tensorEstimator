@@ -93,8 +93,8 @@ def counts(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins, pimax,
         # wprp = convert_rp_pi_counts_to_wp(ndata, ndata, nrand, nrand, dd_res_corrfunc, dr_res_corrfunc,
         #                          dr_res_corrfunc, rr_res_corrfunc, len(rpbins)-1, pimax, dpi=pibinwidth)
 
-        np.save('../results/counts_bin20_frac0.1_randcz.npy',
-               [dd_res_corrfunc, dr_res_corrfunc, rr_res_corrfunc])
+        #np.save('../results/counts_bin20_frac0.1_randcz.npy',
+        #       [dd_res_corrfunc, dr_res_corrfunc, rr_res_corrfunc])
 
         return dd_rp_pi_corrfunc, dr_rp_pi_corrfunc, rr_rp_pi_corrfunc, rp_avg
 
@@ -109,9 +109,6 @@ def calc_wprp(dd, dr, rr, ndata, nrand, pibinwidth=1):
     dd = dd.reshape(-1, pibinwidth, dd.shape[-1]).sum(axis=1)
     dr = dr.reshape(-1, pibinwidth, dr.shape[-1]).sum(axis=1)
     rr = rr.reshape(-1, pibinwidth, rr.shape[-1]).sum(axis=1)
-    print dd
-    print dr
-    print rr
 
     est_ls = calc_ls(dd, dr, rr, ndata, nrand)
     wprp = 2*pibinwidth*np.sum(est_ls, axis=0)

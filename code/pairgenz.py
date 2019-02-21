@@ -7,7 +7,7 @@ from scipy.spatial import cKDTree
 class PairGen():
 
 
-    def __init__(self, cat1, cat2, rmax, cosmo, wp, pimax, chunksize=20):
+    def __init__(self, cat1, cat2, rmax, cosmo, wp, pimax, zspace, chunksize=20):
         assert len(cat2) >= len(cat1), 'The second catalog should be the larger one'
 
         cat1['idx'] = range(len(cat1))
@@ -18,8 +18,12 @@ class PairGen():
         self.cosmo = cosmo
         self.wp = wp
         self.pimax = pimax
+        self.zspace = zspace
         self.chunksize = chunksize
-        self.construct_trees_zshells()
+        if self.zspace:
+            self.construct_tree()
+        else:
+            self.construct_trees_zshells()
         self.num_pairs = 0
 
 
@@ -49,7 +53,7 @@ class PairGen():
     def get_neighbors(self, cat1loc):
 
         i = cat1loc
-        zshell = self.cat1zshells.values[i]
+        zshell = self.cat1zshells[i]
         tree = self.trees[zshell]
         treecat = self.treecats[zshell]
 
@@ -96,8 +100,23 @@ class PairGen():
         return pairs
 
 
+    def construct_tree(self):
+        print 'Constructing tree from cat2'
+
+        treecat = self.cat2
+        points = np.array([treecat['xproj'], treecat['yproj'], treecat['zproj']])
+        if not self.wp:
+            points *= treecat['dcm_mpc']
+        self.tree = KDTree(list(points.T))
+
+        self.cat1zshells = np.full(len(self.cat1), 0)
+        self.trees = [self.tree]
+        self.treecats = [self.cat2]
+
+
 
     def construct_trees_zshells(self):
+
 
         zedges = []
 
@@ -107,19 +126,21 @@ class PairGen():
         dcmh_max = max(max(dcmh1), max(dcmh2))
 
         zmin = np.floor(dcmh_min)
+
+        # in this case can't do trees (right now...)
         dshell = 4. * float(self.pimax)
         while zmin < dcmh_max:
             zedges.append((zmin, zmin + dshell))
             #probs a nicer way to do this in loop, but without then
             #sometimes adds an extra unnecesarry shell
-            if zmin + dshell > dcmh_max:
+            if zmin + dshell >= dcmh_max:
                     break
             zmin += dshell/2.
 
         self.zedges = zedges
 
         self.cat1zshells = self.cat1['dcm_mpc'].apply(self.pick_zshell,
-                                                    args=(self.cosmo.h, zedges, dshell))
+                                                    args=(self.cosmo.h, zedges, dshell)).values
 
         # this splits up cat1 by which shell they belong to - but don't think
         # it's needed unless you're parallelizing on the shell groups rather than
@@ -146,11 +167,11 @@ class PairGen():
             else:
                 self.trees.append(None)
                 self.treecats.append(None)
-        print 'N_trees:', len(self.trees)
-        print 'pimax:', self.pimax, 'dshell:', dshell
-        print 'dcms - min:', dcmh_min, 'max:', dcmh_max, 'diff:', dcmh_max - dcmh_min
-        print 'zedges (dcm)', zedges
-        print 'Datapoints in trees:', [len(t.data) for t in self.trees]
+        # print 'N_trees:', len(self.trees)
+        # print 'pimax:', self.pimax, 'dshell:', dshell
+        # print 'dcms - min:', dcmh_min, 'max:', dcmh_max, 'diff:', dcmh_max - dcmh_min
+        # print 'zedges (dcm)', zedges
+        # print 'Datapoints in trees:', [len(t.data) for t in self.trees]
 
 
     # def a smarter way to do this but

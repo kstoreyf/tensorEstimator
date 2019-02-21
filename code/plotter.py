@@ -14,7 +14,8 @@ color_list = ['magenta', 'red', 'black', 'limegreen', 'blue', 'cyan']
 def main():
     #plot_dr72bins()
     #plot()
-    plot_bins()
+    #plot_bins()
+    plot_bao()
 
 def plot():
     #fn = "../results/dr72_brightLRG_frac0.1.npy"
@@ -31,6 +32,25 @@ def plot():
     print wps
     rps_paper = [[0.17, 0.27, 0.42, 0.67, 1.1, 1.7, 2.7, 4.2, 6.7, 10.6, 16.9, 26.8]]
     plot_wprp(rps_paper, wps, labels)
+
+
+def plot_bao():
+    fn = "../results/bao/xis_dr7_FullLRG_frac0.001_weights.npy"
+    ss, xis, labels = np.load(fn)
+    plot_xi_zspace(ss, xis, labels)
+    #
+    # sample = 'Dim-no'
+    # frac = 0.1
+    # #fn = "../results/wp_dr7_{}LRG_frac{}_weights.npy".format(sample, frac)
+    # fn = "../results/dr72_bin{}_frac{}_randcz.npy".format(20, frac)
+    # rps, wps, labels = run.load_results(fn)
+    # print rps
+    # print wps
+    # rps_paper = [[0.17, 0.27, 0.42, 0.67, 1.1, 1.7, 2.7, 4.2, 6.7, 10.6, 16.9, 26.8]]
+    # plot_wprp(rps_paper, wps, labels)
+
+
+
 
 
 def plot_dr72bins():

@@ -215,19 +215,19 @@ def run(data1, rand1, data2, rand2, pimax, rmin, rmax, bin_sep, basisfuncs,
 
 
 def run_chunks(data1, rand1, data2, rand2, pimax, rmin, rmax, basisfuncs,
-                   K, cosmo, wp, rpbins, vals, pibinwidth, nproc, *args):
+                   K, cosmo, wp, rpbins, vals, pibinwidth, zspace, nproc, *args):
 
-    ddgen = pairgenz.PairGen(data1, data2, rmax, cosmo, wp, pimax)
-    drgen = pairgenz.PairGen(data1, rand2, rmax, cosmo, wp, pimax)
-    rdgen = pairgenz.PairGen(data2, rand1, rmax, cosmo, wp, pimax)
-    rrgen = pairgenz.PairGen(rand1, rand2, rmax, cosmo, wp, pimax)
+    ddgen = pairgenz.PairGen(data1, data2, rmax, cosmo, wp, pimax, zspace)
+    drgen = pairgenz.PairGen(data1, rand2, rmax, cosmo, wp, pimax, zspace)
+    rdgen = pairgenz.PairGen(data2, rand1, rmax, cosmo, wp, pimax, zspace)
+    rrgen = pairgenz.PairGen(rand1, rand2, rmax, cosmo, wp, pimax, zspace)
 
     a = estimator_chunks.est(ddgen, drgen, rdgen, rrgen, pimax, rmax, cosmo,
                                    basisfuncs, K, wp, nproc, *args)
 
     x = bins_logavg(rpbins)
 
-    rps, wprps = calc_wprp(a, x, basisfuncs, K, rpbins, vals, pibinwidth, *args)
+    rps, wprps = calc_wprp(a, x, basisfuncs, K, rpbins, vals, pibinwidth, zspace, *args)
 
     print 'a from chunks:'
     print a
@@ -251,41 +251,47 @@ def log_width(bins):
     K = len(bins)-1
     return (np.log10(max(bins)) - np.log10(min(bins)))/float(K)
 
-def calc_wprp(a, x, basisfunc, K, rpbins, vals, pibinwidth, *args):
+def calc_wprp(a, x, basisfunc, K, rpbins, vals, pibinwidth, zpace, *args):
 
     print a
     #x = np.logspace(np.log10(min(rpbins)), np.log10(max(rpbins)), 500)
     #x = 0.5*np.array(rpbins[1:]+rpbins[:-1])
 
-    rps = []
-    wprps = []
-    print 'WPRP'
+    rs = []
+    xis = []
+    print 'WPRP/xi(s)'
     for bb in range(len(basisfunc)):
         if vals==None:
             bases = []
             for xx in x:
-                bases.append(basisfunc[bb](None, None, None, None, xx, *args))
-            xi_rp = np.matmul(a[bb], np.array(bases).T)
-            xi_rp = np.squeeze(np.asarray(xi_rp))
-            rps.append(x)
-            wprps.append(list(2*pibinwidth*xi_rp))
+                bases.append(basisfunc[bb](None, None, None, None, xx, None, *args))
+            xi = np.matmul(a[bb], np.array(bases).T)
+            xi = np.squeeze(np.asarray(xi))
+            rs.append(x)
+            xis.append(xi)
+            #xis.append(list(2*pibinwidth*xi_rp))
         else:
             for val in vals:
                 bases = []
                 for xx in x:
-                  bases.append(basisfunc[bb](None, None, None, None, xx, *args, val=val))
+                  bases.append(basisfunc[bb](None, None, None, None, xx, None, *args, val=val))
                 print bases
                 print a[bb]
                 #xi_rp = np.zeros_like(x)
                 #for k in range(len(bases)):
                 #    xi_rp += a[bb][k]*ba.arrayses[k]
-                xi_rp = np.matmul(a[bb], np.array(bases).T)
-                xi_rp = np.squeeze(np.asarray(xi_rp))
-                rps.append(x)
-                wprps.append(list(2*pibinwidth*xi_rp))
-    print rps
-    print wprps
-    return rps, wprps
+                xi = np.matmul(a[bb], np.array(bases).T)
+                xi = np.squeeze(np.asarray(xi))
+                rs.append(x)
+                xis.append(xi)
+    print rs
+    print xis
+    if not zpace:
+        # wprp
+        xis = [list(2*pibinwidth*xx for xx in xis)]
+
+    return rs, xis
+
 
 def calc_wprp_orig(a, basisfunc, K, rpbins, *args):
 
