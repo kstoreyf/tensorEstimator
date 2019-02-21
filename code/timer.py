@@ -10,6 +10,7 @@ import pairs
 import estimator_chunks
 import pairgen
 import pairgenz
+import plotter
 
 #globals
 #ndata = [10, 31, 102, 307, 1012, 3158, 10015]
@@ -31,22 +32,64 @@ def plotz():
     nrs = []
     ts = []
     ls = []
+    rs = []
+    ws = []
+    lps = []
 
-    ndmax = 102
-    nproc = 2
+    #ndmax = 1012
+    ndmax = 3158
+    nproc = 24
     fn = '../results/times/times_zshells_n{}_nproc{}.npy'.format(ndmax, nproc)
     saveto = 'plots_2019-02-15/times_zshells_n{}_nproc{}.png'.format(ndmax, nproc)
 
     ndatas, nrands, time_arrs, labels, rps, wprps = np.load(fn)
 
+    print rps
+    print len(rps)
+    print len(rps[0])
+    print wprps
+    print len(wprps)
+    print len(wprps[0])
+
     nds += list(ndatas)
     nrs += list(nrands)
     ts += list(time_arrs)
     ls += list(labels)
+
+    # need bc messed up
+    for i in range(len(rps)):
+        rp = rps[i]
+        wprp = wprps[i]
+        if type(rp[0]) is np.float64:
+            rp = 10 ** rp
+            print rp
+        else:
+            rp = rp[0]
+            wprp = wprp[0]
+        rs.append(rp)
+        ws.append(wprp)
+    #rs += list(rps)
+    #ws += list(wprps)
+    lps += ['corrfunc', 'pairgen', 'pairgenz']*(len(rs)/3)
+
     #ls += ['chunks, nproc={}'.format(nprocs[i])]
 
-    plot_times(nrs, ts, ls, saveto=saveto)
+    #plot_times(nrs, ts, ls, saveto=saveto)
     #plot_times(ndatas, time_arrs, labels)
+    rs = rs[-3:]
+    ws = ws[-3:]
+    lps = lps[-3:]
+
+    print len(rs)
+    print len(ws)
+    print len(lps)
+
+
+    print rs
+    print ws
+    print lps
+
+    plotter.plot_wprp(rs, ws, lps, wp_tocompare='corrfunc', colors=['red', 'green', 'orange'])
 
 
 def plot():

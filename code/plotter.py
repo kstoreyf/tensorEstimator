@@ -107,7 +107,7 @@ def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None, saveto=None):
     color_idx = np.linspace(0, 1, len(wprps))
     if wp_tocompare:
         compidx = labels.index(wp_tocompare)
-        fig, (ax0, ax1) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 1]})
+        fig, (ax0, ax1) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 1]}, sharex=True)
     else:
         fig = plt.figure()
         ax0 = fig.gca()

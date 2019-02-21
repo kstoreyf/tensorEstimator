@@ -1,9 +1,42 @@
 import numpy as np
 from matplotlib import pyplot as plt
+import pandas as pd
+from astropy.cosmology import LambdaCDM
+import timeit
+from time import time
+
+import run
+
+
+def main():
+    scratch_args()
+    #scratch_continuous()
+    #piecewise_check()
+    #piece_cf()
+    #plot_bases()
+
+
+def average_time(executable, *args, **kwargs):
+    """Compute the average time over N runs"""
+    N = 5
+    t = 0
+    for i in range(N):
+        t0 = time()
+        res = executable(*args, **kwargs)
+        t1 = time()
+        t += (t1 - t0)
+    return res, t * 1. / N
 
 
 
-
+def tophat(cat1, cat2, i, j, rp, logbins_avg, logwidth):
+    logrp = np.log10(rp)
+    # u = np.zeros(len(logbins_avg))
+    # for i in range(len(u)):
+    #     peak = logbins_avg[i]
+    #     u[i] = top(logrp, peak, logwidth)
+    u = np.array([top(logrp, peak, logwidth) for peak in logbins_avg])
+    return u
 
 def tophat_orig(rp, rpbins):
     u = np.zeros(len(rpbins)-1)
@@ -427,8 +460,4 @@ def scratch_args():
     elsewhere2('yo', 'a1', 'a2')
 
 if __name__=='__main__':
-    #scratch_args()
-    #scratch_continuous()
-    #piecewise_check()
-    #piece_cf()
-    plot_bases()
+    main()

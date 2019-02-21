@@ -59,7 +59,6 @@ def run_dr72():
 
 def run_dr7_LRGs():
 
-    #sample = 'Full'
     #sample = 'Bright-no'
     sample = 'Dim-no'
     datafn = '../data/DR7-{}.ascii'.format(sample)
@@ -160,7 +159,7 @@ def run_bins(min_sep, max_sep, bin_size, wp, saveto=None):
     saveto = "../results/dr72_bin{}_frac{}_pibinmaxweights1rand0.1n1.npy".format(samplenums[0], frac)
     print saveto
 
-    cosmo = LambdaCDM(H0=70, Om0=0.25, Ob0=0.045, Ode0=0.75) 
+    cosmo = LambdaCDM(H0=70, Om0=0.25, Ob0=0.045, Ode0=0.75)
     K = (np.log10(max_sep) - np.log10(min_sep))/bin_size
     rpbins = np.logspace(np.log10(min_sep), np.log10(max_sep), K+1)
     rpbins_avg = run.bins_logavg(rpbins)
@@ -299,6 +298,14 @@ def combine_bins(samplenums):
 
     datadf.to_csv(fn_save)
     randdf.to_csv(fnrand_save)
+
+def calc_Mrz(Mr, z):
+    q0 = 2.0
+    q1 = -1.0
+    qz0 = 0.1
+    curr_zdep = q0 * (1.0 + q1 * (z - qz0))
+    Mrz = Mr + curr_zdep * (z - qz0)
+    return Mrz
 
 
 def run_sample(samplenum, min_sep, max_sep, rpbins, pimax, wp, cosmo, frac=1, bin_size=None, pibinwidth=2):
