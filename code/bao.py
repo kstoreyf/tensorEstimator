@@ -39,6 +39,8 @@ def main():
 
 def run_dr7_LRGs():
 
+    nproc = 24
+    frac = 0.01
     #sample = 'Bright-no'
     #sample = 'Dim-no'
     print "Loading data..."
@@ -52,7 +54,6 @@ def run_dr7_LRGs():
             'sector_completeness', 'n(z)*1e4', 'radial_weight', 'ilss', 'sector'], dtype={'z':np.float64},
              skiprows=1)
 
-    frac = 0.01
     #saveto = None
     saveto = "../results/bao/xis_dr7_{}LRG_frac{}_weights.npy".format(sample, frac)
     cosmo = LambdaCDM(H0=70, Om0=0.25,Ode0=0.75)
@@ -118,7 +119,6 @@ def run_dr7_LRGs():
     binwidth = (rmax-rmin)/float(K)
     pibinwidth = losmax
     vals = None
-    nproc = 1
     print "Running estimator..."
     s_est, xi_est, a = run.run_chunks(data, rand, data, rand, losmax, rmin,
                                 rmax, basisfuncs, K, cosmo, wp, bins,
