@@ -113,7 +113,7 @@ class PairGen():
             points = np.array([treecat['xpos'], treecat['ypos'], treecat['zpos']])
         self.tree = KDTree(list(points.T))
 
-        self.cat1zshells = np.full(len(self.cat1), 0)
+        self.cat1zshells = np.full(len(self.cat1), 0, dtype='int64')
         self.trees = [self.tree]
         self.treecats = [self.cat2]
 

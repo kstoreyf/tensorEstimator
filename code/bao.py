@@ -39,6 +39,8 @@ def main():
 
 def run_dr7_LRGs():
 
+    nproc = 24
+    frac = 0.01
     #sample = 'Bright-no'
     #sample = 'Dim-no'
     print "Loading data..."
@@ -52,9 +54,6 @@ def run_dr7_LRGs():
             'sector_completeness', 'n(z)*1e4', 'radial_weight', 'ilss', 'sector'], dtype={'z':np.float64},
              skiprows=1)
 
-    nproc = 2
-    #frac = 0.001
-    frac = 1
     #saveto = None
     saveto = "../results/bao/xis_dr7_{}LRG_frac{}.npy".format(sample, frac)
     cosmo = LambdaCDM(H0=70, Om0=0.25,Ode0=0.75)
