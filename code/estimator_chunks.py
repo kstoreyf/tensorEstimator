@@ -22,10 +22,11 @@ def est(ddpg, drpg, rdpg, rrpg, pimax, rmax, cosmo, basisfunc, K, wp, nproc, *ar
         locs = None
         print 'Calculating dd vector'
         dds = project_pairs(ddpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, False, None, None, *args)
-        print dds
+        print dds, sum(np.array(dds).flatten())
+        #print sdfdf
         print 'Calculating dr vector'
         drs = project_pairs(drpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, False, None, None, *args)
-        print drs
+        print drs, sum(np.array(drs).flatten())
 
         print 'Calculating rd vector'
         # should check if need to compute both aka if d1==d2 (drs and rds should be same bc using symmetric defs of dcm)
@@ -33,7 +34,7 @@ def est(ddpg, drpg, rdpg, rrpg, pimax, rmax, cosmo, basisfunc, K, wp, nproc, *ar
 
         print 'Calculating rr vector'
         rrs, qqs = project_pairs(rrpg, locs, pimax, rmax, cosmo, basisfunc, K, wp, True, None, None, *args)
-        print rrs
+        print rrs, sum(np.array(rrs).flatten())
 
     else:
         pair_arrs = [[ddpg, False],
@@ -128,6 +129,7 @@ def project_pairs(pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor, count_
     startloc, endloc = locs
     loc = startloc
 
+    #TODO: why do i need this??
     pimax *= h
 
     while loc<endloc:
@@ -138,11 +140,13 @@ def project_pairs(pg, locs, pimax, rmax, cosmo, basisfunc, K, wp, tensor, count_
                 # pi = h * abs(dcm1[i] - dcm2[j])
                 pi = get_pi(dcm1, dcm2, int(i), int(j), h)
                 #TODO: implement binning in pi
-                if pi>pimax:
-                    continue
+                #if pi>pimax:
+                #    continue
                 #r = rp_unit2mpch(dcm1_transverse, dcm2_transverse, i, j, r, h)
                 # dcm_transverse_avg = 0.5 * (dcm1_transverse[i] + dcm2_transverse[j])
                 # r *= dcm_transverse_avg * h
+            else:
+                pi = None
 
             # Now this is rp if wp or just r if 3d
             if r<=rmax:
@@ -270,6 +274,8 @@ def tophat_xis(cat1, cat2, i, j, rp, pi, bins, width):
         s = np.sqrt(rp**2 + pi**2)
     else:
         s = rp
+    #if s <= max(bins):
+    #    print rp, pi, s
     ins_s = -1
     for nn in range(len(bins) - 1):
         if bins[nn] <= s and s < bins[nn + 1]:

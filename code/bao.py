@@ -52,31 +52,41 @@ def run_dr7_LRGs():
             'sector_completeness', 'n(z)*1e4', 'radial_weight', 'ilss', 'sector'], dtype={'z':np.float64},
              skiprows=1)
 
-    frac = 0.01
+    nproc = 2
+    #frac = 0.001
+    frac = 1
     #saveto = None
-    saveto = "../results/bao/xis_dr7_{}LRG_frac{}_weights.npy".format(sample, frac)
+    saveto = "../results/bao/xis_dr7_{}LRG_frac{}.npy".format(sample, frac)
     cosmo = LambdaCDM(H0=70, Om0=0.25,Ode0=0.75)
 
     print 'ndata=', len(data.index)
     print 'nrand=', len(rand.index)
+
     #Sector completeness already cut to >0.6, not sure if still have to downsample randoms
     #and many have sector completness > 1!! ??
     # data = data[data['z']<0.36]
     # data = data[data['ra']>90][data['ra']<270] #NGC
 
-    data = data.sample(frac=frac)
-    rand = rand.sample(frac=frac)
-    # data1 = data1[:int(frac*len(data1.index))]
-    # rand1 = rand1[:int(frac*len(rand1.index))]
+    # data = data.sample(frac=frac)
+    # rand = rand.sample(frac=frac)
+    data = data[:int(frac*len(data.index))]
+    rand = rand[:int(frac*len(rand.index))]
     print 'ndata=', len(data.index)
     print 'nrand=', len(rand.index)
 
     print "Adding info..."
-    data = run.add_info(data)
-    rand = run.add_info(rand)
+    data = run.add_info(data, cosmo)
+    rand = run.add_info(rand, cosmo)
 
-    weights_data = data['radial_weight']*data['fiber_coll_weight']
-    weights_rand = rand['radial_weight']
+    print max(data['dcm_mpc']), min(data['dcm_mpc'])
+    print max(rand['dcm_mpc']), min(rand['dcm_mpc'])
+
+
+
+    #weights_data = data['radial_weight']*data['fiber_coll_weight']
+    #weights_rand = rand['radial_weight']
+    weights_data = None
+    weights_rand = None
 
     losmax = 1.0 #max of cosine
     #losmax = 40.0
@@ -112,13 +122,13 @@ def run_dr7_LRGs():
     end = time.time()
     print 'Time for dr7 {} LRGs, ndata={}: {}'.format(sample, len(data.index), end-start)
 
-    wp = True
+    #wp = True
+    wp = False
     basisfuncs = [estimator_chunks.tophat_xis]
     bin_arg = bins
     binwidth = (rmax-rmin)/float(K)
     pibinwidth = losmax
     vals = None
-    nproc = 1
     print "Running estimator..."
     s_est, xi_est, a = run.run_chunks(data, rand, data, rand, losmax, rmin,
                                 rmax, basisfuncs, K, cosmo, wp, bins,

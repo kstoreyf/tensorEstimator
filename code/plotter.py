@@ -24,7 +24,7 @@ def plot():
     # plot_xi_zspace(ss, xis, labels)
 
     sample = 'Dim-no'
-    frac = 0.1
+    frac = 0.001
     #fn = "../results/wp_dr7_{}LRG_frac{}_weights.npy".format(sample, frac)
     fn = "../results/dr72_bin{}_frac{}_randcz.npy".format(20, frac)
     rps, wps, labels = run.load_results(fn)
@@ -35,8 +35,13 @@ def plot():
 
 
 def plot_bao():
-    fn = "../results/bao/xis_dr7_FullLRG_frac0.001_weights.npy"
+    fn = "../results/bao/xis_dr7_FullLRG_frac0.001.npy"
     ss, xis, labels = np.load(fn)
+
+    ss = [ss[0], ss[1][0]]
+    xis = [xis[0], xis[1][0]]
+    print ss
+    print xis
     plot_xi_zspace(ss, xis, labels)
     #
     # sample = 'Dim-no'
@@ -199,7 +204,7 @@ def plot_xi_zspace(ss, xis, labels, colors=None, xi_tocompare=None):
         else:
             color = color_list[i]
 
-        ax0.plot(s, xi, label=label, color=color, marker='o')
+        ax0.plot(s, xi, label=label, color=color, marker='o', ls='-')
 
         #plt.xlabel(r'$s$ (Mpc/h)')
         #ax0.set_ylim(-0.005, 0.025)

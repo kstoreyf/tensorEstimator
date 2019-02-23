@@ -135,13 +135,13 @@ def main():
 
 
 
-def load_data(datafn, randfn):
+def load_data(datafn, randfn, cosmo):
     print 'Loading data'
     data = pd.read_csv(datafn)
     rand = pd.read_csv(randfn)
     print 'Adding info to dataframes'
-    data = add_info(data, zfile=None)
-    rand = add_info(rand, zfile=None)
+    data = add_info(data, cosmo, zfile=None)
+    rand = add_info(rand, cosmo, zfile=None)
     return data, rand
 
 
@@ -331,17 +331,18 @@ def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo, nproc=1,
 
 
 
-def run_treecorr(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp):
+def run_treecorr(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp, cosmo):
 
     #TODO: make work for 2 data and 2 rand catalogs
 
     ra = data1['ra'].values
     dec = data1['dec'].values
-    dist = data1['z'].apply(get_comoving_dist).values
+    dist = data1['z'].apply(get_comoving_dist, args=(cosmo,)).values
+
 
     ra_rand = rand1['ra'].values
     dec_rand = rand1['dec'].values
-    dist_rand = rand1['z'].apply(get_comoving_dist).values
+    dist_rand = rand1['z'].apply(get_comoving_dist, args=(cosmo,)).values
 
     ndata = len(ra)
     nrand = len(ra_rand)
@@ -395,17 +396,17 @@ def run_treecorr(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, 
     return xi, dd, dr, rd, rr
 
 
-def run_treecorr_orig(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp):
+def run_treecorr_orig(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax, wp, cosmo):
 
     #TODO: make work for 2 data and 2 rand catalogs
 
     ra = data1['ra'].values
     dec = data1['dec'].values
-    dist = data1['z'].apply(get_comoving_dist).values
+    dist = data1['z'].apply(get_comoving_dist, args=(cosmo,)).values
 
     ra_rand = rand1['ra'].values
     dec_rand = rand1['dec'].values
-    dist_rand = rand1['z'].apply(get_comoving_dist).values
+    dist_rand = rand1['z'].apply(get_comoving_dist, args=(cosmo,)).values
 
     ndata = len(ra)
     nrand = len(ra_rand)
@@ -460,7 +461,7 @@ def pairs_treecorr(data1, rand1, data2, rand2, min_sep, max_sep, bin_size, pimax
     return xi, d1d2pairs, d1r2pairs, d2r1pairs, r1r2pairs
 
 
-def add_info(df, zfile=None):
+def add_info(df, cosmo, zfile=None):
     # Project onto unit sphere
     df['xproj'], df['yproj'], df['zproj'] = zip(*df.apply(ra_dec_to_unitxyz, axis=1))
 
@@ -474,7 +475,7 @@ def add_info(df, zfile=None):
     # interp_dcm_transverse = interpolate.interp1d(zdf['z_round'], zdf['dcm_transverse_mpc'])
     # df['dcm_mpc'] = df['z'].apply(interp_dcm)
     # df['dcm_transverse_mpc'] = df['z'].apply(interp_dcm_transverse)
-    df['dcm_mpc'] = df['z'].apply(get_comoving_dist)
+    df['dcm_mpc'] = df['z'].apply(get_comoving_dist, args=(cosmo,)).values
     df['dcm_transverse_mpc'] = df['dcm_mpc']
 
     #3d position in Mpc
@@ -483,7 +484,7 @@ def add_info(df, zfile=None):
     return df
 
 
-def calc_rp(cat1, cat2, i, j):
+def calc_rp(cat1, cat2, i, j, cosmo):
 
     unitdist = np.sqrt((cat1['xproj'][i] - cat2['xproj'][j])**2
                      + (cat1['yproj'][i] - cat2['yproj'][j])**2
@@ -495,7 +496,7 @@ def calc_rp(cat1, cat2, i, j):
     return rp
 
 # Real-space distance in Mpc/h
-def calc_r3d(cat1, cat2, i, j):
+def calc_r3d(cat1, cat2, i, j, cosmo):
 
     dist = np.sqrt((cat1['xpos'][i] - cat2['xpos'][j])**2
                      + (cat1['ypos'][i] - cat2['ypos'][j])**2
@@ -519,9 +520,7 @@ def unitxyz_to_xyz(row):
     z = d*row['zproj']
     return x, y, z
 
-cosmo = LambdaCDM(H0=70, Om0=0.3, Ode0=0.7)
-
-def get_comoving_dist(z):
+def get_comoving_dist(z, cosmo):
     comov = cosmo.comoving_distance(z)
     return comov.value*cosmo.h
 

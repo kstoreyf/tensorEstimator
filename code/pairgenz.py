@@ -20,10 +20,10 @@ class PairGen():
         self.pimax = pimax
         self.zspace = zspace
         self.chunksize = chunksize
-        if self.zspace:
-            self.construct_tree()
-        else:
-            self.construct_trees_zshells()
+        #if self.zspace:
+        #    self.construct_tree()
+        #else:
+        self.construct_trees_zshells()
         self.num_pairs = 0
 
 
@@ -65,7 +65,8 @@ class PairGen():
 
         ipoint = np.array([self.cat1['xproj'].values[i], self.cat1['yproj'].values[i], self.cat1['zproj'].values[i]])
         if not self.wp:
-            ipoint *= self.cat1['dcm_mpc'].values[i]  # turn projected into real space
+            #TODO: h???
+            ipoint *= self.cat1['dcm_mpc'].values[i]#*self.cosmo.h  # turn projected into real space
             rmax_tree = self.rmax
         if self.wp:
             # here the given rmax rmax is really rpmax
@@ -87,13 +88,15 @@ class PairGen():
         # if wp: dists are transverse distances in mpc/h
         # if not wp: dists are real space 3d dists in mpc/h
         # TODO: don't know why don't need this??
-        #dists *= self.cosmo.h
+        #if not self.wp:
+        #    dists *= self.cosmo.h
 
         js = treecat['idx'].values
         pairs = [(i, js[locs[k]], dists[k]) for k in range(len(locs))]
         #pairs = [(i, locs[k], dists[k]) for k in range(len(locs))]
         #Eliminate self-pairs (though they shouldn't pass through later if rmin > 0
         pairs = [p for p in pairs if p[2] > 0]
+        #print pairs
         #self.cat1loc += 1
         #print i, len(pairs)
         self.num_pairs += len(pairs)
@@ -104,9 +107,10 @@ class PairGen():
         print 'Constructing tree from cat2'
 
         treecat = self.cat2
-        points = np.array([treecat['xproj'], treecat['yproj'], treecat['zproj']])
-        if not self.wp:
-            points *= treecat['dcm_mpc']
+        if self.wp:
+            points = np.array([treecat['xproj'], treecat['yproj'], treecat['zproj']])
+        else:
+            points = np.array([treecat['xpos'], treecat['ypos'], treecat['zpos']])
         self.tree = KDTree(list(points.T))
 
         self.cat1zshells = np.full(len(self.cat1), 0)
@@ -128,7 +132,10 @@ class PairGen():
         zmin = np.floor(dcmh_min)
 
         # in this case can't do trees (right now...)
-        dshell = 4. * float(self.pimax)
+        if self.wp:
+            dshell = 4. * float(self.pimax)
+        else:
+            dshell = 4. * float(self.rmax)
         while zmin < dcmh_max:
             zedges.append((zmin, zmin + dshell))
             #probs a nicer way to do this in loop, but without then
@@ -156,6 +163,7 @@ class PairGen():
         for i in range(len(zedges)):
             zedge = zedges[i]
             shell = self.cat2.loc[(zedge[0] <= dcmh2) & (dcmh2 < zedge[1])]
+
             points = np.array([shell['xproj'], shell['yproj'], shell['zproj']])
             if not self.wp:
                 points *= shell['dcm_mpc']

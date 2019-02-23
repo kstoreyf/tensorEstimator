@@ -54,6 +54,21 @@ def counts(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins, pimax,
                                        weights1=weights_rand, is_comoving_dist=comoving, verbose=verbose,
                                        weight_type=weight_type)
 
+        # just for printing
+        dd_rp_pi_corrfunc = np.zeros((len(pibins) - 1, len(rpbins) - 1))
+        dr_rp_pi_corrfunc = np.zeros((len(pibins) - 1, len(rpbins) - 1))
+        rr_rp_pi_corrfunc = np.zeros((len(pibins) - 1, len(rpbins) - 1))
+
+        for m in range(len(pibins)-1):
+            for n in range(len(rpbins)-1):
+                idx = (len(pibins)-1) * n + m
+                # = count * avg weight
+                dd_rp_pi_corrfunc[m][n] = dd_res_corrfunc[idx][4]*dd_res_corrfunc[idx][5]
+                dr_rp_pi_corrfunc[m][n] = dr_res_corrfunc[idx][4]*dr_res_corrfunc[idx][5]
+                rr_rp_pi_corrfunc[m][n] = rr_res_corrfunc[idx][4]*rr_res_corrfunc[idx][5]
+        print dd_rp_pi_corrfunc, sum(dd_rp_pi_corrfunc.flatten())
+        print dr_rp_pi_corrfunc, sum(dr_rp_pi_corrfunc.flatten())
+        print rr_rp_pi_corrfunc, sum(rr_rp_pi_corrfunc.flatten())
 
         return dd_res_corrfunc, dr_res_corrfunc, rr_res_corrfunc
 
