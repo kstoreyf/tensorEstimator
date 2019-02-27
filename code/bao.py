@@ -34,13 +34,13 @@ colors = {7:'red', 8:'orange', 9:'green',
 
 
 def main():
-    run_dr7_LRGs()
+    run_dr7_LRGs_corrfunc()
 
 
 def run_dr7_LRGs():
 
-    nproc = 24
-    frac = 0.01
+    nproc = 2
+    frac = 0.05
     #sample = 'Bright-no'
     #sample = 'Dim-no'
     print "Loading data..."
@@ -105,6 +105,7 @@ def run_dr7_LRGs():
     else:
         exit('ERROR')
     bins = np.linspace(rmin, rmax, K + 1)
+    print "Bins:", bins
     #bins = np.logspace(np.log10(rmin), np.log10(rmax), K + 1)
     ss = []
     xis = []
@@ -141,6 +142,104 @@ def run_dr7_LRGs():
     if saveto:
         print "Saving to {}".format(saveto)
         np.save(saveto, [ss, xis, labels])
+        #run.save_results(saveto, ss, xis, labels)
+    #plotter.plot_xi_zspace(ss, xis, labels)
+
+
+def run_dr7_LRGs_corrfunc():
+
+    print "Just running corrfunc"
+    nproc = 2
+    frac = 0.1
+    #sample = 'Bright-no'
+    #sample = 'Dim-no'
+    print "Loading data..."
+    sample = 'Full'
+    datafn = '../data/DR7-{}.ascii'.format(sample)
+    randfn = '../data/random-DR7-{}.ascii'.format(sample)
+    data = pd.read_table(datafn, index_col=False, delim_whitespace=True, names=['ra', 'dec', 'z',
+            'M_g', 'sector_completeness', 'n(z)*1e4', 'radial_weight', 'fiber_coll_weight',
+            'fogtmain', 'ilss', 'icomb', 'sector'], dtype={'z':np.float64}, skiprows=1)
+    rand = pd.read_table(randfn, index_col=False,  delim_whitespace=True, names=['ra', 'dec', 'z',
+            'sector_completeness', 'n(z)*1e4', 'radial_weight', 'ilss', 'sector'], dtype={'z':np.float64},
+             skiprows=1)
+
+    #saveto = None
+    saveto = "../results/bao/xis_dr7_{}LRG_frac{}_corrfunc.npy".format(sample, frac)
+    cosmo = LambdaCDM(H0=70, Om0=0.25,Ode0=0.75)
+
+    print 'ndata=', len(data.index)
+    print 'nrand=', len(rand.index)
+
+    #Sector completeness already cut to >0.6, not sure if still have to downsample randoms
+    #and many have sector completness > 1!! ??
+    # data = data[data['z']<0.36]
+    # data = data[data['ra']>90][data['ra']<270] #NGC
+
+    data = data.sample(frac=frac)
+    #frac *=0.5
+    rand = rand.sample(frac=frac)
+    #data = data[:int(frac*len(data.index))]
+    #rand = rand[:int(frac*len(rand.index))]
+    print 'ndata=', len(data.index)
+    print 'nrand=', len(rand.index)
+
+    weights_data = data['radial_weight']*data['fiber_coll_weight']
+    weights_rand = rand['radial_weight']
+    # weights_data = None
+    # weights_rand = None
+
+    losmax = 1.0 #max of cosine
+    #losmax = 40.0
+    zspace = True
+    if sample=='Bright-no':
+        K = 21
+        rmin = 60
+        rmax = 200
+    elif sample=='Full':
+        K = 14
+        rmin = 40
+        rmax = 100
+    elif sample=='Dim-no':
+        K = 15
+        rmin = 0.01
+        rmax = 8.
+    else:
+        exit('ERROR')
+    bins = np.linspace(rmin, rmax, K + 1)
+    #bins = np.logspace(np.log10(rmin), np.log10(rmax), K + 1)
+    print "bins:", bins
+    ss = []
+    xis = []
+    aa = []
+    labels = []
+
+    print "Running corrfunc..."
+    start = time.time()
+    # or rp, wp
+    s, xi_orig, xi_proj, amps = run.run_corrfunc(data, rand, data, rand, bins, losmax, cosmo,
+                             weights_data=weights_data, weights_rand=weights_rand,
+                             zspace=zspace, proj=True, nproc=nproc)
+
+    print "s:", s
+    print "xi_orig", xi_orig
+    print "xi_proj", xi_proj
+
+    ss.append(s)
+    xis.append(xi_orig)
+    aa.append(None)
+    labels.append("corrfunc orig")
+
+    ss.append(s)
+    xis.append(xi_proj)
+    aa.append(amps)
+    labels.append("corrfunc projected")
+    end = time.time()
+    print 'Time for dr7 {} LRGs, ndata={}: {}'.format(sample, len(data.index), end-start)
+
+    if saveto:
+        print "Saving to {}".format(saveto)
+        np.save(saveto, [ss, xis, aa, labels])
         #run.save_results(saveto, ss, xis, labels)
     #plotter.plot_xi_zspace(ss, xis, labels)
 

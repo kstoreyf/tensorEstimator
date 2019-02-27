@@ -305,7 +305,7 @@ def calc_wprp_orig(a, basisfunc, K, rpbins, *args):
 
 
 def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo, nproc=1,
-                 weights_data=None, weights_rand=None, pibinwidth=1, zspace=False):
+                 weights_data=None, weights_rand=None, pibinwidth=1, zspace=False, proj=False):
     print 'Running corrfunc'
     #can only do autocorrelations right now
 
@@ -314,16 +314,35 @@ def run_corrfunc(data1, rand1, data2, rand2, rpbins, pimax, cosmo, nproc=1,
     nrand = len(rand1.index)
 
     if zspace:
-        dd, dr, rr = corrfunc.counts(data1['ra'].values, data1['dec'].values, data1['z'].values,
+        print "Zspace"
+        res = corrfunc.counts(data1['ra'].values, data1['dec'].values, data1['z'].values,
                                      rand1['ra'].values, rand1['dec'].values, rand1['z'].values, rpbins, pimax,
-                                     cosmo, nproc=nproc, weights_data=weights_data, weights_rand=weights_rand, comoving=True, zspace=True)
-        xi = convert_3d_counts_to_cf(ndata, ndata, nrand, nrand, dd, dr, dr, rr)
-        rp_avg = 0.5*(rpbins[1:]+rpbins[:-1])
-        return rp_avg, xi
+                                     cosmo, nproc=nproc, weights_data=weights_data, weights_rand=weights_rand,
+                                     comoving=True, zspace=True, proj=proj)
+        if proj:
+            print "Proj"
+            dd, dr, rr, svals, xi_proj, amps = res
+            x = bins_logavg(rpbins)
+            #TODO: will have to do this in corrfunc to be consistent!!
+            #basisfuncs = [estimator_chunks.tophat_xis]
+            #K = len(rpbins)-1
+            #vals = None
+            xi_orig = convert_3d_counts_to_cf(ndata, ndata, nrand, nrand, dd, dr, dr, rr)
+            #args = [rpbins, None]
+            #print sdfsf
+            #s, xis_proj = calc_wprp(a, x, basisfuncs, K, rpbins, vals, pibinwidth, zspace, *args)
+            return svals, xi_orig, xi_proj, amps
+
+        else:
+            dd, dr, rr = res
+            xi = convert_3d_counts_to_cf(ndata, ndata, nrand, nrand, dd, dr, dr, rr)
+            rp_avg = 0.5*(rpbins[1:]+rpbins[:-1])
+            return rp_avg, xi
     else:
         dd, dr, rr, rp_avg = corrfunc.counts(data1['ra'].values, data1['dec'].values, data1['z'].values,
                                              rand1['ra'].values, rand1['dec'].values, rand1['z'].values, rpbins, pimax,
-                                             cosmo, nproc=nproc, weights_data=weights_data, weights_rand=weights_rand, comoving=True)
+                                             cosmo, nproc=nproc, weights_data=weights_data, weights_rand=weights_rand,
+                                             comoving=True, proj=proj)
         est_ls, wprp = corrfunc.calc_wprp(dd, dr, rr, len(data1), len(rand1), pibinwidth=pibinwidth)
         ##est_ls = None
         return rp_avg, wprp

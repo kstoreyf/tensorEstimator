@@ -8,8 +8,8 @@ from time import time
 
 
 def main():
-    # check_kdtrees()
-    check_kdtrees_periodic()
+    check_kdtrees()
+    #check_kdtrees_periodic()
 
 
 def average_time(executable, *args, **kwargs):

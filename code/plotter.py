@@ -35,14 +35,20 @@ def plot():
 
 
 def plot_bao():
-    fn = "../results/bao/xis_dr7_FullLRG_frac0.001.npy"
-    ss, xis, labels = np.load(fn)
+    #fn = "../results/bao/xis_dr7_FullLRG_frac1_rand0.5.npy"
+    #fn = "../results/bao/xis_dr7_FullLRG_frac0.1_copy2.npy"
+    fn = "../results/bao/xis_dr7_FullLRG_frac0.005_corrfunc.npy"
 
-    ss = [ss[0], ss[1][0]]
-    xis = [xis[0], xis[1][0]]
+    ss, xis, aa, labels = np.load(fn)
+
     print ss
     print xis
-    plot_xi_zspace(ss, xis, labels)
+
+    #ss = [ss[0], ss[1][0]]
+    #xis = [xis[0], xis[1][0]]
+    #print ss
+    #print xis
+    plot_xi_zspace(ss, xis, list(labels), xi_tocompare='corrfunc orig')
     #
     # sample = 'Dim-no'
     # frac = 0.1
@@ -178,7 +184,7 @@ def plot_wprp(rps, wprps, labels, colors=None, wp_tocompare=None, saveto=None):
     plt.show()
 
 
-def plot_xi_zspace(ss, xis, labels, colors=None, xi_tocompare=None):
+def plot_xi_zspace(ss, xis, labels, colors=None, xi_tocompare=None, saveto=None):
 
     # if np.array(ss).ndim==1:
     #     ss = [ss]
@@ -222,6 +228,8 @@ def plot_xi_zspace(ss, xis, labels, colors=None, xi_tocompare=None):
                 ax1.semilogx(s, xi/xicomp, color=color)
                 ax1.set_ylabel(r'$w_p$/$w_{{p,\mathrm{{{0}}}}}$'.format(xi_tocompare))
 
+    if saveto:
+        plt.savefig(saveto)
     plt.show()
 
 if __name__=="__main__":

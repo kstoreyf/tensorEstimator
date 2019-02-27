@@ -18,7 +18,7 @@ def main():
         tbuilds.append(tbuild)
         tqueries.append(tquery)
 
-    fn = '../../clust/results/times/timekd_center_scipyperiodic2.txt'
+    fn = '../../clust/results/times/timekd_center_scipyperiodic_together.txt'
     np.savetxt(fn, np.array([treesizes, tbuilds, tqueries]).T, fmt='%d', delimiter=',')
 
 
