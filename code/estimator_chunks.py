@@ -286,6 +286,25 @@ def tophat_xis(cat1, cat2, i, j, rp, pi, bins, width):
         u[ins_s] = 1
     return u
 
+def tophat_xis_pow(cat1, cat2, i, j, rp, pi, bins, width):
+    if pi:
+        s = np.sqrt(rp**2 + pi**2)
+    else:
+        s = rp
+
+    u = []
+    s0 = 50
+    gamma = 2
+    powlaw = (s/s0)**-gamma
+    u.append(powlaw)
+
+    amp = 0.1
+    sigma = 5
+    mean = 107
+    bump = amp*np.exp(-(s-mean)**2/(2*sigma**2))
+    u.append(bump)
+
+    return np.array(u)
 
 #def quad(cat1, cat2, i, j, rp, logbins_avg, logwidth, val=None)
 
