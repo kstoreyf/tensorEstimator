@@ -21,11 +21,20 @@ def run_dr7_LRGs():
     print "Running corrfunc estimator on LRGs"
 
     sample = 'Full'
-    nproc = 1
-    frac = 0.05
+    nproc = 24
+    frac = 0.1
+    randfrac = 1
+    projtag = '_s18'
+    if randfrac==1:
+      randfractag = ''
+    else:
+      randfractag = '_rand'+str(randfrac)
+    
+    saveto = "../results/bao/xis_dr7_{}LRG_frac{}{}{}.npy".format(sample, frac, randfractag, projtag)
+
     K = 14
-    rmin = 40
-    rmax = 180
+    smin = 40
+    smax = 180
 
     datafn = '../data/DR7-{}.ascii'.format(sample)
     randfn = '../data/random-DR7-{}.ascii'.format(sample)
@@ -35,7 +44,6 @@ def run_dr7_LRGs():
     rand = pd.read_csv(randfn, index_col=0)
 
     #saveto = None
-    saveto = "../results/bao/xis_dr7_{}LRG_frac{}.npy".format(sample, frac)
     cosmo = LambdaCDM(H0=70, Om0=0.25,Ode0=0.75)
 
     #check if need to return or in place
@@ -47,8 +55,7 @@ def run_dr7_LRGs():
     print 'nrand=', len(rand.index)
 
     data = data.sample(frac=frac)
-    #frac *=0.5
-    rand = rand.sample(frac=frac)
+    rand = rand.sample(frac=frac*randfrac)
     #data = data[:int(frac*len(data.index))]
     #rand = rand[:int(frac*len(rand.index))]
     nd = len(data.index)
@@ -63,7 +70,8 @@ def run_dr7_LRGs():
 
     mumax = 1.0 #max of cosine
 
-    sbins = np.linspace(rmin, rmax, K + 1)
+    sbins = np.linspace(smin, smax, K + 1)
+    sbinsavg = np.array(0.5*(sbins[1:]+sbins[:-1]))
     print "bins:", sbins
     ss = []
     xis = []
@@ -90,7 +98,9 @@ def run_dr7_LRGs():
     print 'Computed amplitudes'
 
     amps = np.array(amps)
-    svals = np.array(0.5*(sbins[1:]+sbins[:-1]))
+    svals = np.linspace(smin, smax, 20)
+    print "svals:",svals
+    #svals = np.array(0.5*(sbins[1:]+sbins[:-1]))
     nsvals = len(svals)
     sbins = np.array(sbins)
     nsbins = len(sbins)-1
@@ -102,11 +112,12 @@ def run_dr7_LRGs():
     xi_orig = convert_3d_counts_to_cf(nd, nd, nr, nr, dd_orig, dr_orig, dr_orig, rr_orig)
 
 
-    print "s:", svals
+    print "savg:", sbinsavg
     print "xi_orig", xi_orig
+    print "svals", svals
     print "xi_proj", xi_proj
 
-    ss.append(svals)
+    ss.append(sbinsavg)
     xis.append(xi_orig)
     labels.append("corrfunc orig")
     counts.append([dd_orig, dr_orig, rr_orig])
