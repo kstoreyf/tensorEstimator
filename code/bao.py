@@ -149,24 +149,30 @@ def run_dr7_LRGs():
 def run_dr7_LRGs_corrfunc():
 
     print "Just running corrfunc"
-    nproc = 2
-    frac = 0.1
+    nproc = 1
+    frac = 0.05
     #sample = 'Bright-no'
     #sample = 'Dim-no'
     print "Loading data..."
     sample = 'Full'
     datafn = '../data/DR7-{}.ascii'.format(sample)
     randfn = '../data/random-DR7-{}.ascii'.format(sample)
-    data = pd.read_table(datafn, index_col=False, delim_whitespace=True, names=['ra', 'dec', 'z',
+
+
+
+    print sdfsdf
+    data = pd.read_csv(datafn, index_col=False, delim_whitespace=True, names=['ra', 'dec', 'z',
             'M_g', 'sector_completeness', 'n(z)*1e4', 'radial_weight', 'fiber_coll_weight',
             'fogtmain', 'ilss', 'icomb', 'sector'], dtype={'z':np.float64}, skiprows=1)
-    rand = pd.read_table(randfn, index_col=False,  delim_whitespace=True, names=['ra', 'dec', 'z',
+    rand = pd.read_csv(randfn, index_col=False,  delim_whitespace=True, names=['ra', 'dec', 'z',
             'sector_completeness', 'n(z)*1e4', 'radial_weight', 'ilss', 'sector'], dtype={'z':np.float64},
              skiprows=1)
 
     #saveto = None
     saveto = "../results/bao/xis_dr7_{}LRG_frac{}_corrfunc.npy".format(sample, frac)
     cosmo = LambdaCDM(H0=70, Om0=0.25,Ode0=0.75)
+
+    #utils.write_comoving_dist(data, )
 
     print 'ndata=', len(data.index)
     print 'nrand=', len(rand.index)
@@ -199,7 +205,7 @@ def run_dr7_LRGs_corrfunc():
     elif sample=='Full':
         K = 14
         rmin = 40
-        rmax = 100
+        rmax = 180
     elif sample=='Dim-no':
         K = 15
         rmin = 0.01

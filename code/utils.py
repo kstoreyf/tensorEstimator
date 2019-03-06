@@ -11,6 +11,8 @@ def main():
     #fn = '../data/DR7-{}.ascii'.format(sample)
     fn = '../data/random-DR7-{}.ascii'.format(sample)
 
+
+
     df = pd.read_csv(fn, index_col=0)
     #cosmo = LambdaCDM(H0=70, Om0=0.25,Ode0=0.75)
     cosmo = LambdaCDM(H0=70, Om0=0.30,Ode0=0.70)

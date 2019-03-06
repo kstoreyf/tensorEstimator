@@ -21,10 +21,16 @@ def run_dr7_LRGs():
     print "Running corrfunc estimator on LRGs"
 
     sample = 'Full'
-    nproc = 24
+    nproc = 2
     frac = 0.1
     randfrac = 1
-    projtag = '_s18'
+
+    #proj_type = 'tophat'
+    #proj_type = 'piecewise'
+    proj_type = 'powerlaw'
+    #proj_label = proj_type
+    proj_label = proj_type+'6'
+    projtag = '_'+proj_label
     if randfrac==1:
       randfractag = ''
     else:
@@ -35,6 +41,11 @@ def run_dr7_LRGs():
     K = 14
     smin = 40
     smax = 180
+    sbins = np.linspace(smin, smax, K + 1)
+    sbinsavg = np.array(0.5*(sbins[1:]+sbins[:-1]))
+    print "bins:", sbins
+    #nprojbins = len(sbins)-1
+    nprojbins = 1
 
     datafn = '../data/DR7-{}.ascii'.format(sample)
     randfn = '../data/random-DR7-{}.ascii'.format(sample)
@@ -54,8 +65,11 @@ def run_dr7_LRGs():
     print 'ndata=', len(data.index)
     print 'nrand=', len(rand.index)
 
-    data = data.sample(frac=frac)
-    rand = rand.sample(frac=frac*randfrac)
+    #data = data.sample(frac=frac)
+    #rand = rand.sample(frac=frac*randfrac)
+    step = int(1/frac)
+    data = data[::step]
+    rand = rand[::step]
     #data = data[:int(frac*len(data.index))]
     #rand = rand[:int(frac*len(rand.index))]
     nd = len(data.index)
@@ -70,9 +84,7 @@ def run_dr7_LRGs():
 
     mumax = 1.0 #max of cosine
 
-    sbins = np.linspace(smin, smax, K + 1)
-    sbinsavg = np.array(0.5*(sbins[1:]+sbins[:-1]))
-    print "bins:", sbins
+
     ss = []
     xis = []
     labels = []
@@ -89,23 +101,23 @@ def run_dr7_LRGs():
                                   data_cz, rand['ra'].values, rand['dec'].values,
                                   rand_cz, sbins, mumax, cosmo, nproc=nproc,
                                   weights_data=weights_data, weights_rand=weights_rand,
-                                  comoving=True)
+                                  comoving=True, proj_type=proj_type,
+                                  nprojbins=nprojbins)
 
     dd, dr, rr, qq, dd_orig, dr_orig, rr_orig = res
-    nprojbins = len(sbins)-1
     # Note: dr twice because cross-correlations will be possible
     amps = compute_amps(nprojbins, nd, nd, nr, nr, dd, dr, dr, rr, qq)
     print 'Computed amplitudes'
 
     amps = np.array(amps)
-    svals = np.linspace(smin, smax, 20)
+    svals = np.linspace(smin, smax, 300)
     print "svals:",svals
     #svals = np.array(0.5*(sbins[1:]+sbins[:-1]))
     nsvals = len(svals)
     sbins = np.array(sbins)
     nsbins = len(sbins)-1
 
-    xi_proj = evaluate_xi(nprojbins, amps, nsvals, svals, nsbins, sbins)
+    xi_proj = evaluate_xi(nprojbins, amps, nsvals, svals, nsbins, sbins, proj_type)
     end = time.time()
     print 'Time for dr7 {} LRGs, nd={} nr={}: {}'.format(sample, nd, nr, end - start)
 
@@ -119,13 +131,13 @@ def run_dr7_LRGs():
 
     ss.append(sbinsavg)
     xis.append(xi_orig)
-    labels.append("corrfunc orig")
+    labels.append("orig")
     counts.append([dd_orig, dr_orig, rr_orig])
     aa.append(None)
 
     ss.append(svals)
     xis.append(xi_proj)
-    labels.append("corrfunc projected")
+    labels.append(proj_label)
     counts.append([dd, dr, rr, qq])
     aa.append(amps)
 

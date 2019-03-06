@@ -18,7 +18,7 @@ from astropy.cosmology import LambdaCDM
 
 def counts_smu(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins,
             losmax, cosmo, nproc=1, weights_data=None, weights_rand=None,
-            comoving=False):
+            comoving=False, proj_type=None, nprojbins=None):
 
     assert(len(ra_data)==len(dec_data) and len(ra_data)==len(z_data))
     assert(len(ra_rand)==len(dec_rand) and len(ra_rand)==len(z_rand))
@@ -27,6 +27,9 @@ def counts_smu(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins,
     nr1 = len(ra_rand)
     nd2 = nd1
     nr2 = nr1
+
+    if nprojbins is None:
+        nprojbins = len(rpbins)
 
     if weights_data is None:
         weights_data = np.ones(nd1)
@@ -46,7 +49,7 @@ def counts_smu(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins,
     start = time.time()
     dd_res_corrfunc, dd_proj, dd_projt = DDsmu_mocks(1, cosmology, nthreads, mumax, nmubins, rpbins, ra_data, dec_data, z_data,
                                    weights1=weights_data, is_comoving_dist=comoving, verbose=verbose,
-                                   weight_type=weight_type, isa=isa)
+                                   weight_type=weight_type, isa=isa, proj_type=proj_type, nprojbins=nprojbins)
     end = time.time()
     print "Time DD pairs:", end - start
     print "DD:", dd_proj
@@ -58,9 +61,9 @@ def counts_smu(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins,
     dr_res_corrfunc, dr_proj, dr_projt = DDsmu_mocks(0, cosmology, nthreads, mumax, nmubins, rpbins, ra_data, dec_data, z_data,
                                         RA2=ra_rand, DEC2=dec_rand, CZ2=z_rand, weights1=weights_data,
                                    weights2=weights_rand, is_comoving_dist=comoving, verbose=verbose,
-                                   weight_type=weight_type, isa=isa)
+                                   weight_type=weight_type, isa=isa, proj_type=proj_type, nprojbins=nprojbins)
     end = time.time()
-    print "Time DD pairs:", end - start
+    print "Time DR pairs:", end - start
     print "DR:", dr_proj
     print dr_res_corrfunc
 
@@ -68,7 +71,7 @@ def counts_smu(ra_data, dec_data, z_data, ra_rand, dec_rand, z_rand, rpbins,
     start = time.time()
     rr_res_corrfunc, rr_proj, rr_projt = DDsmu_mocks(1, cosmology, nthreads, mumax, nmubins, rpbins, ra_rand, dec_rand, z_rand,
                                    weights1=weights_rand, is_comoving_dist=comoving, verbose=verbose,
-                                   weight_type=weight_type, isa=isa)
+                                   weight_type=weight_type, isa=isa, proj_type=proj_type, nprojbins=nprojbins)
     end = time.time()
     print "Time RR pairs:", end - start
     print "RR:", rr_proj
