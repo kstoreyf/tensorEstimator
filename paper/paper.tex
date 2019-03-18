@@ -38,7 +38,14 @@
 
 \begin{document}\sloppy\sloppypar\raggedbottom\frenchspacing
 
-\title{\textbf{No More Bins:\\ A Vectorized Correlation Function Estimator For Large-Scale Structure}}
+\title{\textbf{A Continuous Correlation Function Estimator for Large-Scale Structure}}
+%\title{\textbf{A Continuous Representation of the Correlation Function Estimator for Large-Scale Structure}}
+%\title{\textbf{Correlation Function Estimation with Continuous Functions for Large-Scale Structure}}
+%\title{\textbf{Estimating the Two-Point Correlation Function with Continuous Functions}}
+%\title{\textbf{Projecting Two-Point Correlations onto General Basis Functions: A New Estimator For Large-Scale Structure}}
+%\title{\textbf{A Correlation Function Estimator with General Basis Functions for Large-Scale Structure}}
+%\title{\textbf{A Generalized Correlation Function Estimator For Large-Scale Structure}}
+%\title{\textbf{No More Bins:\\ A Vectorized Correlation Function Estimator For Large-Scale Structure}}
 %\title{A Generalized Correlation Function Estimator for Galaxy Surveys}
 
 %Tensorial estimator?
@@ -46,7 +53,6 @@
 %Tensorial estimator? 
 %Projected estimator?
 %Continuous estimator?
-%Vecstimator?
 
 
 \author{Kate Storey-Fisher}
@@ -61,20 +67,19 @@
 \begin{abstract}\noindent
 % Context
 The two-point correlation function (2PCF) is the most important statistic in structure formation.
-However, current estimators of the 2PCF have significant limitations.
+Current estimators of the 2PCF, which characterizes the clustering of density field tracers, have significant limitations.
 The standard Landy-Szalay (LS) estimator evaluates the 2PCF in bins of radial separation between objects, and the choice of bins introduces a trade-off between bias and variance.
-Further binning trade-offs are required to determine the dependence of clustering on galaxy properties or redshift.
 % Aims
-We present a new, vectorized estimator (Foo) for the 2PCF that obviates binning in separation or anything else.
-Instead of estimating the 2PCF in bins, it estimates the parameters of a continuous-function representation of the 2PCF in the form of a linear superposition of basis functions.
-% Methods
-Inspired by linear least-squares fitting, the Foo estimator marks the numerator terms of LS with vectors of basis functions of pair properties, and the denominator with a tensor of outer products of those functions.
-The function estimates the best-fit linear combination of basis functions to describe the 2PCF, in the same limit in which LS is justifiably optimal for binned applications.
+We present a new, generalized estimator (Foo) for the 2PCF that obviates binning in separation or any other property.
 % Results
-We apply Foo to artificial data to demonstrate that it can determine the clustering in a representation that provides more accuracy with fewer basis functions than LS, thus reducing requirements on mocks for covariance estimation.
-We apply Foo to the Main Sample of the Sloan Digital Sky Survey (SDSS) to show that Foo can measure the luminosity-dependence of clustering without binning samples in luminosity.
-We apply Foo to the Luminous Red Galaxy Sample of SDSS-III (DO WE?) to show that Foo can extract a compact set of Fisher-optimal statistics for measuring the location of the baryon acoustic feature.
-We discuss other applications and limitations of Foo for present and future studies of large-scale structure; in principle it can be used to unify real-space and Fourier-space approaches because it can be used to estimate parameters for any wavelet or Fourier basis.
+The Foo estimator replaces the binned pair counts of LS with a continuous-function representation in the form of a linear superposition of basis functions.
+These functions can take advantage of the known form of the 2PCF, and can depend on other properties of the pairs in addition to their separation.
+Inspired by linear least-squares fitting, Foo marks the numerator terms of LS with vectors of these functions, and the denominator with a tensor of their outer products.
+The estimator outputs the best-fit linear combination of basis functions to describe the 2PCF, in the same limit in which LS is justifiably optimal for binned applications. 
+% Results
+We apply Foo to the Luminous Red Galaxy Sample of the Sloan Digital Sky Survey (SDSS) to show that it estimates the clustering in a representation that provides more accuracy with fewer basis functions than LS, thus reducing requirements on mocks for covariance estimation.
+We demonstrate that Foo can extract a compact set of Fisher-optimal statistics for measuring the location of the baryon acoustic feature.
+We discuss other applications and limitations of Foo for present and future studies of large-scale structure; it could be used to determine the dependence of clustering on galaxy properties such as luminosity, and in principle it could unify real-space and Fourier-space approaches because by using a Fourier basis representation.
 \end{abstract}
 
 
