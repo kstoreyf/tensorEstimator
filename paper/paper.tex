@@ -1,5 +1,5 @@
-% This project is part of the Tensor Estimator project
-% Copyright 2018 the authors.
+% This project is part of the Continuous-Function Estimator project
+% Copyright 2019 the authors.
 
 % to-do
 % -----
@@ -10,18 +10,24 @@
 % -----------
 % - line break at sentence breaks? Or more frequently? So git diff works good?
 
-\documentclass[modern]{aastex62}
+\documentclass[twocolumn]{aastex62}
+
+\usepackage[sort&compress]{natbib}
+\usepackage{xspace}
 
 % aastex parameters
 %%\hypersetup{linkcolor=red,citecolor=green,filecolor=cyan,urlcolor=magenta}
-\received{not yet but hopefully soon!!}
+\received{XXX}
 %\revised{not yet}
-%\accepted{not yet}
+\accepted{YYY}
 %\submitjournal{ApJ}
-\shorttitle{vectorized correlation function estimator}
-\shortauthors{storey-fisher and hogg}
+\shorttitle{A Continuous Correlation Function Estimator}
+\shortauthors{Storey-Fisher and Hogg}
 
 % typography
+\newcommand{\cf}{2pcf\xspace} %2pF? 2PCF? %TODO: fix spacing after
+\newcommand{\Est}{The Continuous-Function Estimator\xspace}
+\newcommand{\est}{the Continuous-Function Estimator\xspace}
 
 % affiliations
 \newcommand{\ccpp}{\affiliation{%
@@ -36,9 +42,13 @@
 \newcommand{\mpia}{\affiliation{%
     Max-Planck-Institut f\"{u}r Astronomie, Heidelberg}}
 
+
 \begin{document}\sloppy\sloppypar\raggedbottom\frenchspacing
 
-\title{\textbf{A Continuous Correlation Function Estimator for Large-Scale Structure}}
+\title{\textbf{A Continuous-Function Estimator of the Correlation Function for Large-Scale Structure}}
+%\title{\textbf{A Continuous Correlation Function Estimator for Large-Scale Structure}}
+%\title{\textbf{A Continuous-Function Correlation Function Estimator for Large-Scale Structure}}
+%\title{\textbf{Projecting the Correlation Function onto Continuous Functions for Large-Scale Structure Surveys}
 %\title{\textbf{A Continuous Representation of the Correlation Function Estimator for Large-Scale Structure}}
 %\title{\textbf{Correlation Function Estimation with Continuous Functions for Large-Scale Structure}}
 %\title{\textbf{Estimating the Two-Point Correlation Function with Continuous Functions}}
@@ -48,14 +58,14 @@
 %\title{\textbf{No More Bins:\\ A Vectorized Correlation Function Estimator For Large-Scale Structure}}
 %\title{A Generalized Correlation Function Estimator for Galaxy Surveys}
 
-%Tensorial estimator?
-%Generalized estimator?
-%Tensorial estimator? 
-%Projected estimator?
-%Continuous estimator?
+%Generalized Estimator?
+%Projected Estimator?
+%Continuous Estimator?
+%Continuous-Function Estimator?
+%Linear-Regression Estimator?
+%Vectorized estimator?
 
-
-\author{Kate Storey-Fisher}
+\author[0000-0001-8764-7103]{Kate Storey-Fisher}
 \ccpp
 
 \author[0000-0003-2866-9403]{David W. Hogg}
@@ -66,40 +76,88 @@
 
 \begin{abstract}\noindent
 % Context
-The two-point correlation function (2PCF) is the most important statistic in structure formation.
-Current estimators of the 2PCF, which characterizes the clustering of density field tracers, have significant limitations.
-The standard Landy-Szalay (LS) estimator evaluates the 2PCF in bins of radial separation between objects, and the choice of bins introduces a trade-off between bias and variance.
+The two-point correlation function (\cf) is the most important statistic in structure formation.
+Current estimators of the \cf, used to measure the clustering of density field tracers, have significant limitations.
+The standard Landy-Szalay (LS) estimator evaluates the \cf in bins of radial separation between objects, and the choice of bins introduces a trade-off between bias and variance.
 % Aims
-We present a new, generalized estimator (Foo) for the 2PCF that obviates binning in separation or any other property.
+We present a new, generalized estimator, \est, for the \cf that obviates binning in separation or any other property.
 % Results
-The Foo estimator replaces the binned pair counts of LS with a continuous-function representation in the form of a linear superposition of basis functions.
-These functions can take advantage of the known form of the 2PCF, and can depend on other properties of the pairs in addition to their separation.
-Inspired by linear least-squares fitting, Foo marks the numerator terms of LS with vectors of these functions, and the denominator with a tensor of their outer products.
-The estimator outputs the best-fit linear combination of basis functions to describe the 2PCF, in the same limit in which LS is justifiably optimal for binned applications. 
+\Est replaces the binned pair counts of LS with a continuous-function representation in the form of a linear superposition of basis functions.
+These functions can take advantage of the known form of the \cf, and can depend on other properties of the pairs in addition to their separation.
+Inspired by linear least-squares fitting, \est marks the numerator terms of LS with vectors of these functions, and the denominator with a tensor of their outer products.
+The estimator outputs the best-fit linear combination of basis functions to describe the \cf, in the same limit in which LS is justifiably optimal for binned applications. 
 % Results
-We apply Foo to the Luminous Red Galaxy Sample of the Sloan Digital Sky Survey (SDSS) to show that it estimates the clustering in a representation that provides more accuracy with fewer basis functions than LS, thus reducing requirements on mocks for covariance estimation.
-We demonstrate that Foo can extract a compact set of Fisher-optimal statistics for measuring the location of the baryon acoustic feature.
-We discuss other applications and limitations of Foo for present and future studies of large-scale structure; it could be used to determine the dependence of clustering on galaxy properties such as luminosity, and in principle it could unify real-space and Fourier-space approaches because by using a Fourier basis representation.
+We show that it can estimate the clustering of artificial data in representations that provide more accuracy with fewer basis functions than LS, thus reducing requirements on mocks for covariance estimation.
+We apply \est to the Luminous Red Galaxy sample of the Sloan Digital Sky Survey (SDSS), and show can extract a compact set of Fisher-optimal statistics for measuring the location of the baryon acoustic feature.
+We discuss other applications and limitations of \est for present and future studies of large-scale structure, including determining the dependence of clustering on galaxy properties and potentially unifying real-space and Fourier-space approaches by using a Fourier basis representation.
 \end{abstract}
 
+\keywords{cosmology: large-scale structure --- galaxies: statistics} %?
 
 \section{Introduction}
 
-Binning is sinning!
+The large-scale structure (LSS) of the universe is a critical probe of fundamental cosmology. 
+It encodes information about the physics of the early universe and the subsequent expansion history.
+In particular, the LSS provides a probe of the Baryon Acoustic Oscillations (BAO), density fluctuations resulting from baryon-photon coupling in the early universe.
+The distance traveled by these waves imprints a feature on the statistical description of the LSS, which can be used to determine the characteristic BAO length scale \citep{EisensteinHu1998}.
+The LSS also contains the signature of redshift-space distortions caused by the peculiar velocities of galaxies, which probe the growth rate of structure \citep{Kaiser1987}.
+Additionally, the LSS can be used to constrain galaxy formation in conjunction with models of galaxy bias (e.g. \citealt{Hamilton1988}). %?
+With current observations, the LSS is well-described by a cold dark matter model with a cosmological constant, the standard $\Lambda$CDM model.
+Upcoming galaxy surveys will observe larger volumes with improved measurements, allowing us to test $\Lambda$CDM to even higher precision.
 
-Large-scale structure (LSS) is well-described by $\Lambda$CDM. 
+We characterize the LSS by using luminous sources to trace the underlying matter density field.
+These tracers are often to taken to be galaxies, but can also be galaxy clusters, quasars and other sources.
+% should i say that hereafter we will take them to be galaxies?
+The clustering of these objects is measured with two-point statistics, namely the power spectrum $P(k)$ and the two-point correlation function (\cf). %name xi_r?
+These characterize the clustering in Fourier space and real space, respectively, with the \cf defined as the Fourier Transform of the power spectrum; in principle, they contain the same information. %show eqn? 
+However, in practical applications the survey boundaries introduce nontrivial issues in computing these statistics, leading to diverging approaches to their computation with a significant difference in expense.
+The \cf requires more computational power and extra survey products, but it is an incredibly useful tool; for instance, it well-suited to the analysis of the BAO feature which manifests at a single scale in real space.
 
-LSS is also used to constrain galaxy formation.
+The \cf measures the excess probability that any two galaxies are separated by a given distance, compared to a uniform distribution; effectively, it characterizes the strength of clustering at a given spatial scale. 
+% need to discuss statistical homogeneity & isotropy? (ergodicity?)
+In calculating the \cf, the boundaries of the surveys prevent us from directly summing pair counts due to nontrivial edge effects.
+To account for the survey boundaries as well as corrupted regions due to issues such as bright foreground stars, a set of random points are Poisson-distributed within the acceptable survey window. 
+The pairwise correlations of these points, which by construction are unclustered, are used to normalize out the survey window when estimating the \cf of the clustered data.
+Typically, this requires random points on the order of 10-100 times the number of data points, making the random correlations the limiting factor in \cf computation.
 
-The Landy-Szalay estimator is traditionally used to characterize clustering in the LSS.
+The \cf is computed in bins of radial separation, meaning that in practice it measures the volume average of the \cf over the bin.
+The choice of bins requires a trade-off between bias and variance: fewer bins may bias the result, while more bins increases the variance of measurement.
+Finite-width bins also result in a loss of information about the property in which one is binning. 
+Especially as we strive to extreme precision in large-scale structure analyses, we should be maximizing the information we extract from the data.
+Moreover, we note that standard estimators are fundamentally biased due to this finite binning; we will address this in a future work. %TODO: figure out this wording
 
-The marked correlation function has been used to understand the clustering dependence on galaxy properties.
+%some papers have equations (even this eqn) in intro - but should bump it to motivation and just explain?
+The current standard estimator was proposed by \cite{LandySzalay1993}, hereafter LS, which is based on summing all data pairs $DD$ with a given separation and using data-random pairs $DR$ and random pairs $RR$ to correct for the survey boundary. The correlation function $\xi_k(r)$ for the $k^\mathrm{th}$ separation bin is
+%assume we should keep this notation even though it's clunky, as it's recognizable
+%should we use estimator notation with a hat on xi?
+\begin{equation}
+\xi_k(r) = \frac{DD_k(r) - 2DR_k(r) + RR_k(r)}{RR_k(r)}.
+\end{equation}
+Compared with other estimators based on combinations of $DD$, $DR$ and $RR$, LS has been shown to have the lowest bias and variance \citep{Kerscher2000}.
+%is this necessary? not sure where it fits
+Estimators of the \cf must also take into account the imperfect nature of the survey area that is in the window, including the target completeness and fiber collisions; typically each galaxy pair is assigned a weight based on these.
 
-The 2PCF is closely related to the power spectrum, but these are computed separately. 
+Variations on the random catalog pair count method have been proposed in recent years.
+\cite{Demina2016} replaced the $DR$ and $RR$ terms with an integral over the probability map, reducing computation time and increasing precision.
+An estimator proposed by \cite{VargasMagana2013} iterates over sets of mock catalogs to find an optimal linear combination of data and random pair counts, reducing the bias and variance.
+The marked correlation function \citep{WhitePadmanabhan2009} sums weights based on properties of the galaxies one is interested in, such as the local density or galaxy luminosity, and avoids the use of a random catalog.
+The estimators described so far have all taken probabilistic approaches; some have also taken a likelihood approach.
+\cite{BaxterRozo2013} introduced a maximum likelihood estimator for the \cf, which achieves lower variance compared to the LS estimator, enabling finer binning and requiring a smaller random catalog for the same precision.
 
-This is a probabilistic/frequentist approach.
+These estimators present improvements to LS, but they all still require binning in separation.
+Some require additional computational costs or layers of complexity, so the standard formulation of LS continues to be the default estimator used in analyses.
 
-\section{Generalities}
+In this paper, we present a new estimator for the correlation function, \est, which generalizes the LS estimator to produce a continuous estimation of the \cf. 
+\Est projects the galaxy pairs onto a set of continuous basis functions and computes the best-fit linear combination of these functions.
+The basis representation can depend on the pair separation as well as other desired properties, and can also utilize the known form of the \cf.
+For top-hat basis functions, \est exactly reduces to the LS estimator. 
+This estimator removes the need for binning and allows for the \cf to be represented by fewer basis functions, requiring fewer mock catalogs to compute the covariance matrix.
+It is particularly well-suited to the analysis of LSS features such as the BAO peak; we find that we can more accurately locate the peak with fewer components.
+
+%spell out acronyms again that were defined in the abstract?
+This paper is organized as follows. In Section \ref{sec:motiv}, we motivate and derive our estimator. In Section \ref{sec:est}, we prove its correctness and describe our implementation, and demonstrate its application on a simulated data set. Our results on the SDSS LRG sample are shown in Section \ref{sec:app}. We discuss the implications and other possible applications in Section \ref{sec:discuss}. 
+
+\section{Motivation} \label{sec:motiv}
 
 The Landy-Szalay estimator is justified by\ldots
 
@@ -107,7 +165,8 @@ Estimating clustering is closely related to least-squares fitting.
 
 From these, we can infer the form of the estimator.
 
-\section{Methods}
+% TODO: fix this capitalization issue
+\section{\Est} \label{sec:est}
 
 We derive/define this new estimator.
 
@@ -115,35 +174,47 @@ We show that it reduces to the Landy-Szalay estimator.
 
 We prove that the estimator is invariant under affine transformations.
 
+We show that in the limit of infinitesimal bins\ldots
+
 These show that the estimator is correct.
 
-We implement this estimator using \ldots
+We show that it extracts Fisher-optimal information.
 
-\section{Tests and Results}
+We implement this estimator based on the correlation function package \texttt{corrfunc} by \citep{citeXXX} \ldots
+The code is open-source and available at XXX.
 
-To test this estimator, we generate a Gaussian random field with a known power spectrum (and thus known correlation function). We sample the field to obtain a set of tracer objects.
+We show its performance on a simulated Gaussian random field.
 
-We apply the estimator to the SDSS main galaxy sample. \ldots We reproduce the results of Zehavi et al, showing that the clustering shows a strong dependence on luminosity. \ldots We find that we can more precisely track this luminosity evolution.
+\section{Application to survey data} \label{sec:app}
 
-We use this estimator to linearize around the BAO feature, using an LRG dataset. Show Fisher-optimal! (Different Fisher.)
+We apply the estimator to the SDSS DR3 sample from \cite{Eisenstein2005}.
 
-\section{Discussion}
+The reconstructed dataset we use is described in \cite{Kazin2010}.
 
-Covariance matrix
+We use \est to linearize around the BAO feature. 
 
-We estimated the 2PCF with fewer components to achieve the same level of detail.
+\section{Discussion} \label{sec:discuss}
+
+We estimated the \cf with fewer components to achieve the same level of precision.
+
+We note that our estimator doesn't rely on LS; it could be implemented for various linear combination of pair counts, given certain properties. %aka the tensor term
+
+Our performance is by definition the same (marginally more) compared to traditional estimators due to the limiting factor of pair-finding.
+
+We discuss the impact on computing the covariance matrix.
+
+We discuss the relation of our estimator to the optimized estimator of \cite{VargasMagana2013}, which also uses a linear combination approach.
 
 In the future, we could simultaneously estimate the correlation function and the power spectrum.
 
-We could also investigate: gradients, anomalies, growth of structure, directly estimating the cosmological parameters, calibrating for systematics
+We could also investigate: gradients, anomalies, growth of structure, directly estimating the cosmological parameters, calibrating for systematics, clustering dependence galaxy properties
 
-We have reformulated the correlation function in terms of pairs of objects.
-
-Our performance is by definition the same as traditional estimators due to the limiting factor of pair-finding.
-
-Use our estimator it is the best!
 
 \acknowledgements
 It is a pleasure to thank\ldots
+
+%need style file error
+%\bibliographystyle{apj} 
+\bibliography{paper}
 
 \end{document}
