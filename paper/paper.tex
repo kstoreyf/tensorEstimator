@@ -10,7 +10,9 @@
 % -----------
 % - line break at sentence breaks? Or more frequently? So git diff works good?
 
-\documentclass[twocolumn]{aastex62}
+%\documentclass[twocolumn]{aastex62}
+%\documentclass[12 pt]{article}
+\documentclass[modern]{aastex62}
 
 \usepackage[sort&compress]{natbib}
 \usepackage{xspace}
@@ -24,10 +26,21 @@
 \shorttitle{A Continuous Correlation Function Estimator}
 \shortauthors{Storey-Fisher and Hogg}
 
-% typography
+% language
 \newcommand{\cf}{2pcf\xspace} %2pF? 2PCF? %TODO: fix spacing after
 \newcommand{\Est}{The Continuous-Function Estimator\xspace}
 \newcommand{\est}{the Continuous-Function Estimator\xspace}
+\newcommand{\LS}{LS\xspace}
+\newcommand{\foreign}[1]{\textsl{#1}}
+\newcommand{\etc}{\foreign{etc}}
+
+% math
+\newcommand{\inv}{^{-1}}
+\newcommand{\T}{^{\mathsf{T}}}
+
+% margins
+%\addtolength{\topmargin}{-0.75in}
+%\addtolength{\textheight}{1.50in}
 
 % affiliations
 \newcommand{\ccpp}{\affiliation{%
@@ -44,8 +57,8 @@
 
 
 \begin{document}\sloppy\sloppypar\raggedbottom\frenchspacing
-
-\title{\textbf{A Continuous-Function Estimator of the Correlation Function for Large-Scale Structure}}
+\title{\textbf{Two-point statistics without bins: A correlation function estimator for large-scale structure in a continuous-function basis}}
+%\title{\textbf{A Continuous-Function Estimator of the Correlation Function for Large-Scale Structure}}
 %\title{\textbf{A Continuous Correlation Function Estimator for Large-Scale Structure}}
 %\title{\textbf{A Continuous-Function Correlation Function Estimator for Large-Scale Structure}}
 %\title{\textbf{Projecting the Correlation Function onto Continuous Functions for Large-Scale Structure Surveys}
@@ -78,17 +91,17 @@
 % Context
 The two-point correlation function (\cf) is the most important statistic in structure formation.
 Current estimators of the \cf, used to measure the clustering of density field tracers, have significant limitations.
-The standard Landy-Szalay (LS) estimator evaluates the \cf in bins of radial separation between objects, and the choice of bins introduces a trade-off between bias and variance.
+The standard Landy-Szalay (\LS) estimator evaluates the \cf in bins of radial separation between objects, and the choice of bins introduces a trade-off between bias and variance.
 % Aims
 We present a new, generalized estimator, \est, for the \cf that obviates binning in separation or any other property.
 % Results
-\Est replaces the binned pair counts of LS with a continuous-function representation in the form of a linear superposition of basis functions.
+\Est replaces the binned pair counts of \LS with a continuous-function representation in the form of a linear superposition of basis functions.
 These functions can take advantage of the known form of the \cf, and can depend on other properties of the pairs in addition to their separation.
-Inspired by linear least-squares fitting, \est marks the numerator terms of LS with vectors of these functions, and the denominator with a tensor of their outer products.
-The estimator outputs the best-fit linear combination of basis functions to describe the \cf, in the same limit in which LS is justifiably optimal for binned applications. 
+Inspired by linear least-squares fitting, \est marks the numerator terms of \LS with vectors of these functions, and the denominator with a tensor of their outer products.
+The estimator outputs the best-fit linear combination of basis functions to describe the \cf, in the same limit in which \LS is justifiably optimal for binned applications. 
 % Results
-We show that it can estimate the clustering of artificial data in representations that provide more accuracy with fewer basis functions than LS, thus reducing requirements on mocks for covariance estimation.
-We apply \est to the Luminous Red Galaxy sample of the Sloan Digital Sky Survey (SDSS), and show can extract a compact set of Fisher-optimal statistics for measuring the location of the baryon acoustic feature.
+We demonstrate that it can estimate the clustering of artificial data in representations that provide more accuracy with fewer basis functions than \LS, thus reducing requirements on mocks for covariance estimation.
+We apply \est to the Luminous Red Galaxy sample of the Sloan Digital Sky Survey (SDSS), and show that it can extract a compact set of Fisher-optimal statistics for measuring the location of the baryon acoustic feature.
 We discuss other applications and limitations of \est for present and future studies of large-scale structure, including determining the dependence of clustering on galaxy properties and potentially unifying real-space and Fourier-space approaches by using a Fourier basis representation.
 \end{abstract}
 
@@ -120,65 +133,134 @@ To account for the survey boundaries as well as corrupted regions due to issues 
 The pairwise correlations of these points, which by construction are unclustered, are used to normalize out the survey window when estimating the \cf of the clustered data.
 Typically, this requires random points on the order of 10-100 times the number of data points, making the random correlations the limiting factor in \cf computation.
 
-The \cf is computed in bins of radial separation, meaning that in practice it measures the volume average of the \cf over the bin.
+The \cf is computed in bins of radial separation, meaning that in practice it measures the volume average of the \cf over the bin. %is this accurate?
 The choice of bins requires a trade-off between bias and variance: fewer bins may bias the result, while more bins increases the variance of measurement.
 Finite-width bins also result in a loss of information about the property in which one is binning. 
-Especially as we strive to extreme precision in large-scale structure analyses, we should be maximizing the information we extract from the data.
-Moreover, we note that standard estimators are fundamentally biased due to this finite binning; we will address this in a future work. %TODO: figure out this wording
+Especially as we strive for extreme precision in large-scale structure analyses, we should be maximizing the information we extract from the data.
+Moreover, we note that standard estimators are fundamentally biased due to this finite binning; we will address this in a future work. %TODO: figure out this wording. need to explain more than this or leave out entirely?
 
 %some papers have equations (even this eqn) in intro - but should bump it to motivation and just explain?
-The current standard estimator was proposed by \cite{LandySzalay1993}, hereafter LS, which is based on summing all data pairs $DD$ with a given separation and using data-random pairs $DR$ and random pairs $RR$ to correct for the survey boundary. The correlation function $\xi_k(r)$ for the $k^\mathrm{th}$ separation bin is
+The current standard estimator was proposed by \cite{LandySzalay1993}, hereafter \LS. It is based on summing all data pairs $DD$ with a given separation and using data-random pairs $DR$ and random pairs $RR$ to correct for the survey boundary. The correlation function $\xi_k(r)$ for the $k^\mathrm{th}$ separation bin is
 %assume we should keep this notation even though it's clunky, as it's recognizable
 %should we use estimator notation with a hat on xi?
 \begin{equation}
-\xi_k(r) = \frac{DD_k(r) - 2DR_k(r) + RR_k(r)}{RR_k(r)}.
+\xi_k(r) = \frac{DD_k(r) - 2DR_k(r) + RR_k(r)}{RR_k(r)},
 \end{equation}
-Compared with other estimators based on combinations of $DD$, $DR$ and $RR$, LS has been shown to have the lowest bias and variance \citep{Kerscher2000}.
-%is this necessary? not sure where it fits
-Estimators of the \cf must also take into account the imperfect nature of the survey area that is in the window, including the target completeness and fiber collisions; typically each galaxy pair is assigned a weight based on these.
+where we assume the pair counts are normalized. %should we write out normalization explicitly? here or somewhere else?
+Compared with other estimators based on simple combinations of $DD$, $DR$ and $RR$, \LS has been shown to have the lowest bias and variance \citep{Kerscher2000}. %added simple because there was the recent paper which looked at all linear combos and optimized, think that one might have better bias/variance properties
+Estimators of the \cf must also take into account the imperfect nature of the survey area that is in the window, including the target completeness and fiber collisions; typically each galaxy pair is assigned a weight based on these. %is this necessary? not sure where it fits
+Then, pair counts are replaced by the sum of pair weights.
 
 Variations on the random catalog pair count method have been proposed in recent years.
 \cite{Demina2016} replaced the $DR$ and $RR$ terms with an integral over the probability map, reducing computation time and increasing precision.
 An estimator proposed by \cite{VargasMagana2013} iterates over sets of mock catalogs to find an optimal linear combination of data and random pair counts, reducing the bias and variance.
 The marked correlation function \citep{WhitePadmanabhan2009} sums weights based on properties of the galaxies one is interested in, such as the local density or galaxy luminosity, and avoids the use of a random catalog.
 The estimators described so far have all taken probabilistic approaches; some have also taken a likelihood approach.
-\cite{BaxterRozo2013} introduced a maximum likelihood estimator for the \cf, which achieves lower variance compared to the LS estimator, enabling finer binning and requiring a smaller random catalog for the same precision.
+\cite{BaxterRozo2013} introduced a maximum likelihood estimator for the \cf, which achieves lower variance compared to the \LS estimator, enabling finer binning and requiring a smaller random catalog for the same precision.
 
-These estimators present improvements to LS, but they all still require binning in separation.
-Some require additional computational costs or layers of complexity, so the standard formulation of LS continues to be the default estimator used in analyses.
+These estimators present improvements to \LS, but they all still require binning in separation.
+Some require additional computational costs or layers of complexity, so the standard formulation of \LS continues to be the default estimator used in most analyses. %make sure this is true! talk to cosmologists who do these analyses
 
-In this paper, we present a new estimator for the correlation function, \est, which generalizes the LS estimator to produce a continuous estimation of the \cf. 
+In this paper, we present a new estimator for the correlation function, \est, which generalizes the \LS estimator to produce a continuous estimation of the \cf. 
 \Est projects the galaxy pairs onto a set of continuous basis functions and computes the best-fit linear combination of these functions.
 The basis representation can depend on the pair separation as well as other desired properties, and can also utilize the known form of the \cf.
-For top-hat basis functions, \est exactly reduces to the LS estimator. 
+For top-hat basis functions, \est exactly reduces to the \LS estimator. 
 This estimator removes the need for binning and allows for the \cf to be represented by fewer basis functions, requiring fewer mock catalogs to compute the covariance matrix.
 It is particularly well-suited to the analysis of LSS features such as the BAO peak; we find that we can more accurately locate the peak with fewer components.
 
+%will obviously keep changing this as paper develops
 %spell out acronyms again that were defined in the abstract?
-This paper is organized as follows. In Section \ref{sec:motiv}, we motivate and derive our estimator. In Section \ref{sec:est}, we prove its correctness and describe our implementation, and demonstrate its application on a simulated data set. Our results on the SDSS LRG sample are shown in Section \ref{sec:app}. We discuss the implications and other possible applications in Section \ref{sec:discuss}. 
+This paper is organized as follows. 
+In Section \ref{sec:motiv}, we motivate and derive our estimator. 
+In Section \ref{sec:est}, we prove its correctness and describe our implementation, and demonstrate its application on a simulated data set. 
+Our results on the SDSS LRG sample are shown in Section \ref{sec:app}. 
+We discuss the implications and other possible applications in Section \ref{sec:discuss}. 
 
 \section{Motivation} \label{sec:motiv}
+
+The pair counts for \LS and related estimators are defined explicitly as
+%TODO: fix spacing on sides of equal sign
+\begin{eqnarray}\displaystyle
+DD_k &\equiv& \sum_{n n'} i(g_k < |x_n - x_{n'}| < h_k) \\
+DR_k &\equiv& \sum_{n m} i(g_k < |x_n - x_m| < h_k) \\
+RR_k &\equiv& \sum_{m m'} i(g_k < |x_m - x_{m'}| < h_k),
+\end{eqnarray}
+where $DD_k$ is the count of data--data tracer pairs in bin $k$ (which has bin edges $g_k$ and $h_k$), $i()$ is an indicator function, $x$ is the tracer position, the $n$ and $n'$ indices index data positions, the $m$ and $m'$ indices index random catalog positions, $DR_k$ is the count of data--random pairs, and $RR_k$ is the count of random--random pairs.
 
 The Landy-Szalay estimator is justified by\ldots
 
 Estimating clustering is closely related to least-squares fitting.
+We are trying to find the best representation of spatial data in the space of two-point radial separation.
+Recall that the linear least-squares fit to a set of data 
+\begin{equation}
+X = [A\T C\inv A]\inv [A\T C\inv Y]
+\end{equation}
+where $X$ is the vector of best-fit parameters, $A$ is a matrix with zeroth and first order terms of $x$ data, $C$ is the covariance matrix, and $Y$ is a column vector of $y$ data.
+The second bracketed term contains the observed data; the first bracketed term weights the data by the errors.
+Naively, in the case of the \cf, the observed data is the pair counts at a given separation, and the weights are provided by the pair counts of the random catalog.
+Indeed, this gives DD/RR, the so-called natural estimator (e.g. \citealt{Kerscher2000}).
 
-From these, we can infer the form of the estimator.
+By generalizing this to , we can infer the form of the estimator.
 
 % TODO: fix this capitalization issue
 \section{\Est} \label{sec:est}
 
 We derive/define this new estimator.
 
-We show that it reduces to the Landy-Szalay estimator.
+
+We generalize the \LS estimator defined above to any set of $K$ basis functions $f$ of the pair, so we now have
+\begin{eqnarray}\displaystyle
+DD &\equiv& \sum_{n n'} f(T_n, T_{n'}) \\
+DR &\equiv& \sum_{n m} f(T_n, T_{m}) \\
+RR &\equiv& \sum_{m m'} f(T_m, T_{m'}) \\
+QQ &\equiv& \sum_{m m'} f(T_m, T_{m'}) \cdot f\T(T_m, T_{m'}),
+\end{eqnarray}
+%introduced this T notation to be the most general but it's a bit clunky (see below)
+%what do we think about K-vector notation?
+%matrix->tensor?
+where $DD$, $DR$, and $RR$ are now $K$-vectors, $T$ refers to the data for the given tracer, and $QQ$ is a $K$-by-$K$ matrix defined as the outer product of basis function evaluations of the random--random pairs.
+
+Then, we can compute the \cf as
+\begin{eqnarray}\displaystyle
+% here is where the T notation is weird - when you look at evaluation
+\xi(T_l, T_{l'}) &\equiv& a\T \cdot f(T_l, T_{l'}) \\
+a &\equiv& QQ\inv \cdot (DD + 2DR - RR) 
+\end{eqnarray}
+where $T_l$ and $T_{l'}$ contain the data values at which to evaluate $\xi$, and $a$ is a $K$-vector of the ``amplitudes'' of the basis functions.
+This generalized two-point estimator, or \est, removes the need for binning as the basis functions can be continuous.
+It is invariant under affine transformations; we show this in Appendix \ref{sec:affine}.
+
+\iffalse %This is in index notation - a lot messier and maybe inaccurate (with the inverse QQ)? but more consistent
+\begin{eqnarray}\displaystyle
+DD_k &\equiv& \sum_{n n'} f_k(T_n, T_{n'}) \\
+DR_k &\equiv& \sum_{n m} f_k(T_n, T_{m}) \\
+RR_k &\equiv& \sum_{m m'} f_k(T_m, T_{m'}) \\
+QQ_{kl} &\equiv& \sum_{m m'} f_k(T_m, T_{m'}) f_l(T_m, T_{m'}),
+\end{eqnarray}
+%should we change the letter of k to mean basis functions rather than bins now?
+%better notation for T?
+Then, we can compute the \cf as
+\begin{eqnarray}\displaystyle
+\xi_k(T_j, T_{j'}) &\equiv& a_k f_k(T_j, T_{j'}) \\
+a_k &\equiv& [QQ\inv]_{kl} (DD_l + 2DR_l - RR_l) 
+\end{eqnarray}
+where $k$ now indexes the basis functions, $T$ refers to all of the data for the given tracer, and $QQ_{kl}$ is the product of basis function indexed by $k$ and $l$ for the random--random pairs.
+\fi
+
+In the case where the basis functions only depend on the pair separation, we have $f = f(|x_n - x_{n'}|)$ and $\xi = \xi(r)$, where $r$ is the separation at which to evaluate the correlation function.
+Specifically, we can choose to define a set of basis functions $f$ as,
+\begin{equation}
+f_k(|x_n - x_n'|) =  i(g_k < |x_n - x_{n'}| < h_k)
+\end{equation}
+where $k$ denotes a particular bin in separation.
+In this case the $DD$, $DR$ and $RR$ vectors become binned pair counts and the $QQ$ matrix becomes diagonal, with diagonal elements equal to the $RR$ vector elements. %TODO CONTINUE HERE
+Then for this function $f$, which is the definition of a top-hat (rectangular) function, the estimator is equivalent to that of Landy-Szalay.
 
 We prove that the estimator is invariant under affine transformations.
 
 We show that in the limit of infinitesimal bins\ldots
 
 These show that the estimator is correct.
-
-We show that it extracts Fisher-optimal information.
 
 We implement this estimator based on the correlation function package \texttt{corrfunc} by \citep{citeXXX} \ldots
 The code is open-source and available at XXX.
@@ -197,7 +279,7 @@ We use \est to linearize around the BAO feature.
 
 We estimated the \cf with fewer components to achieve the same level of precision.
 
-We note that our estimator doesn't rely on LS; it could be implemented for various linear combination of pair counts, given certain properties. %aka the tensor term
+We note that our estimator doesn't rely on \LS; it could be implemented for various linear combination of pair counts, given certain properties. %aka the tensor term
 
 Our performance is by definition the same (marginally more) compared to traditional estimators due to the limiting factor of pair-finding.
 
@@ -212,6 +294,47 @@ We could also investigate: gradients, anomalies, growth of structure, directly e
 
 \acknowledgements
 It is a pleasure to thank\ldots
+
+\appendix
+\section{Affine Invariance}\label{sec:affine}
+
+The estimator is invariant under an affine transformation. We represent this by a matrix M, such that 
+\begin{equation}
+f' \leftarrow Mf
+\end{equation}
+Then in the primed basis, the pair counts become
+\begin{eqnarray}\displaystyle
+DD' &=& \sum_{n n'} M f_{n n'} = M\,DD
+\\
+DR' &=& \sum_{n m} M f_{n m} = M\,DR
+\\
+RR' &=& \sum_{m m'} M f_{m m'} = M\,RR
+\end{eqnarray}
+where $f_{n n'} = f_k(T_n, T_{n'})$.
+We have factored $M$ out of the summation. For the $QQ$ matrix we have
+\begin{eqnarray}\displaystyle
+QQ' &=& \sum_{m m'} (Mf_{m m'}) \cdot (Mf_{m m'})\T \\
+&=& M\Bigg[ \sum_{m m'} f_{m m'} \cdot f_{m m'}\T \Bigg]M\T \\
+&=& M QQ M\T
+\end{eqnarray}
+Then the amplitudes in the primed basis become
+\begin{eqnarray}\displaystyle
+a' &=& [M QQ M\T]\inv \cdot [MDD - 2\,MDR + MRR] \\
+&=& (M\T)\inv QQ\inv \cdot [DD - 2\,DR + RR] \\
+&=& (M\T)\inv a
+\end{eqnarray}
+and the estimator in the primed basis is 
+\begin{eqnarray}\displaystyle
+\xi' &=& [(M\T)\inv a]\T \cdot (Mf) \\
+&=& a\T[(M\inv)\T]\T \cdot (Mf) \\
+&=& a\T M\inv \cdot Mf \\
+&=& a\T \cdot f = \xi.
+\end{eqnarray}
+Thus after an affine transformation of the basis function, the resulting estimator is equivalent to the estimator in the original basis.
+
+We note that this requires $M$ be invertible.
+% not sure if i understand what i wrote here
+However, any two equivalent bases must be related by the inverse of a transformation matrix, so this requirement is already satisfied.
 
 %need style file error
 %\bibliographystyle{apj} 
