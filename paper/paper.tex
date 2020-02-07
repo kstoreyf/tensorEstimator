@@ -43,8 +43,8 @@
 \newcommand{\T}{^{\mathsf{T}}}
 \newcommand{\hmpc}{$h^{-1}$Mpc}
 % comments
-\newcommand{\KSF}[1]{\textcolor{teal}{KSF says: #1}}
-
+%\newcommand{\KSF}[1]{\textcolor{teal}{KSF says: #1}}
+\newcommand{\KSF}[1]{\textcolor{teal}{}}
 
 % margins
 %\addtolength{\topmargin}{-0.75in}
@@ -217,11 +217,13 @@ where $DD_k$ is the count of data--data tracer pairs in bin $k$ (which has bin e
 The \LS estimator has been analyzed extensively; it is shown to have the lowest bias and variance compared to other pair-count-based estimators (e.g. \citealt{Kerscher2000}).
 In the limit of unclustered data, for a data volume much larger than the scales of interest, and an infinitely large random catalog, the \LS estimator is known to be optimal: it is unbiased and has minimum variance.
 In practice the latter two limits are sufficiently satisfied, but the data we are interested in is clustered.
-\LS does show a bias on very large scales ($>$150 \hmpc), but the bias is significantly smaller than that of most other estimators (\citealt{Kerscher1999}, \citealt{VargasMagana2013}).
+\LS does show a bias on very large scales ($>$130 \hmpc), but the bias is significantly smaller than that of most other estimators (\citealt{Kerscher1999}, \citealt{VargasMagana2013}).
 \LS is also less sensitive to the number of random points than other estimators \citep{Kerscher2000}.
 \cite{VargasMagana2013} show that for clustered data, the \LS estimator has lower variance than other estimators, but does not reach the Poisson noise limit.
 
-\KSF{Should i explain / show some of the other estimators?}
+\KSF{Figure demonstrating trade-off between bias and variance? or too simple}
+
+\KSF{Should i explain / show some of the other estimators? --> now i do in the beyond LS section}
 
 \KSF{Do i need to explain real space vs redshift space vs projected correlation function?}
 
@@ -244,13 +246,13 @@ From this connection, we can infer the form of the estimator.
 %\section{\Est} 
 %\label{sec:est}
 
-\subsection{\est}
+\subsection{\Est}
 \label{sec:est}
 
 We generalize the \LS estimator defined above to any set of $K$ basis functions $f$ of the pair, so we now have
 \begin{eqnarray}\displaystyle
 DD &\equiv& \frac{2}{N_D(N_D-1)} \sum_{n n'} f(T_n, T_{n'}) \\
-DR &\equiv& \frac{1}{N_D N_R)} \sum_{n m} f(T_n, T_{m}) \\
+DR &\equiv& \frac{1}{N_D N_R} \sum_{n m} f(T_n, T_{m}) \\
 RR &\equiv& \frac{2}{N_R(N_R-1)} \sum_{m m'} f(T_m, T_{m'}) \\
 QQ &\equiv& \frac{2}{N_R(N_R-1)} \sum_{m m'} f(T_m, T_{m'}) \cdot f\T(T_m, T_{m'}),
 \end{eqnarray}
@@ -262,8 +264,8 @@ where $DD$, $DR$, and $RR$ are now $K$-vectors, $T$ refers to the data for the g
 Then, we can compute the \cf as
 \begin{eqnarray}\displaystyle
 % here is where the T notation is weird - when you look at evaluation
-\xi(T_l, T_{l'}) &\equiv& a\T \cdot f(T_l, T_{l'}) \\
-a &\equiv& QQ\inv \cdot (DD + 2DR - RR) 
+a &\equiv& QQ\inv \cdot (DD + 2DR - RR) \\
+\xi(T_l, T_{l'}) &\equiv& a\T \cdot f(T_l, T_{l'})
 \end{eqnarray}
 where $T_l$ and $T_{l'}$ contain the data values at which to evaluate $\xi$, and $a$ is a $K$-vector of the ``amplitudes'' of the basis functions.
 This generalized two-point estimator, or \est, removes the need for binning as the basis functions can be continuous.
@@ -311,22 +313,22 @@ The code is open-source and available at \texttt{github.com/kstoreyf/Corrfunc}.
 
 \KSF{Does this count as Applications if its on fake data? Better name?}
 
-We demonstrate the application of the \est on a simulated Gaussian random field.
-We generate lognormal mock catalogs using the \texttt{nbodykit} package.
+We demonstrate the application of \est on artifical data.
+We generate lognormal mock catalogs \citep{ColesJones1991} using the \texttt{nbodykit} package \citep{Hand2018}.
 We use an input power spectrum with the Planck cosmology \KSF{CITE}.
 The true correlation function is then known: it is the Fourier transform of the input power spectrum, computed numerically.
-Our test catalogs have size (750 \hmpc)$^3$ and a galaxy number density of $3 \times 10^{-4}$, to match that of the Brightest Cluster Galaxies \KSF{CITE}. 
-We compute 100 realizations of this box. 
+Our test catalogs have size (750 \hmpc)$^3$ and a galaxy number density of $3 \times 10^{-4}$, to match that of the Brightest Cluster Galaxies \KSF{CITE}.
+We construct 100 realizations of this box. 
 We also generate a uniformly sampled random catalog with 10 times the number of galaxies as in the data catalogs.
 
 \subsection{Demonstration using Spline Basis Functions}
 \label{sec:spline}
 
-\label{fig:quadratic}
+\label{fig:spline}
 \begin{figure}[ht]
 \centering
-    \includegraphics[width=0.8\textwidth]{tophat_quadratic}
-    \caption{A comparison between the standard tophat estimator (blue solid) and the \est with a quadratic spline basis function (red dotted). The shaded region is the 1$\sigma$ variation in the 100 mock catalogs. The quadratic estimator has lower bias and lower variance with fewer bins.}
+    \includegraphics[width=0.8\textwidth]{tophat_cubic}
+    \caption{A comparison between \est with a cubic spline basis function (red dotted) and the standard tophat estimator (blue solid). The shaded region is the 1$\sigma$ variation in the 100 mock catalogs. The cubic spline estimator has lower bias and lower variance with fewer bins. \KSF{move rmse from figure into text only? but then not necessarily clear its less biased} \KSF{does tophat need to be a different linestyle?}}
 \end{figure}
 
 \KSF{Should i have a figure showing the basis functions?}
@@ -337,24 +339,33 @@ We also generate a uniformly sampled random catalog with 10 times the number of 
 
 \KSF{should RMSE be shown in figure as well as described in text?}
 
-We compare the standard estimator, reformulated as continuous functions using a tophat basis, to the \est with a quadratic spline basis.
-We use second-order B-splines, which constitute the set of basis functions for a quadratic spline \KSF{CITE}.
+A natural extension of tophat basis functions is the B-spline.
+B-splines of order $n$ are piecewise polynomials of order $n-1$; they constitute the basis functions for spline interpolation \KSF{CITE}.
+They have the nice property that the functions and their derivatives can be continuous, depending on the order.
+Further, B-splines are well-localized, which provides a more direct comparison to the typical tophat basis (which is entirely localized).
+For this demonstration we use fourth-order B-splines, which constitute the set of basis functions for a cubic spline, as they are the lowest-order spline to have a continuous first derivative.
+We compare this standard estimator, reformulated as continuous functions using a tophat basis.
 For the tophat basis we use 44 basis functions in the range $40 < r < 150$ \hmpc, each with a width of 2.5 \hmpc. 
-For the quadratic spline basis, we use the same $r$ range, but with only 11 basis functions, and knots chosen on a grid of 10 \hmpc.
+For the cubic spline basis, we use the same $r$ range, but with only 11 basis functions, and knots chosen on a grid of 10 \hmpc.
 \KSF{need to specify more about knots? is this accurate (not quite, the knots repeat values at the edge i think...) and should i mention control points?}
 
-The results are shown in Figure~\ref{fig:quadratic}, compared to the true input \cf.
-The quadratic basis results in a \cf estimate that has a root mean square error (RMSE) with respect to the truth of $4.39 \times 10^{-4}$, compared to $5.43 \times 10^{-4}$ for the tophat basis.
+The results are shown in Figure~\ref{fig:spline}, compared to the true input \cf.
+The spline basis results in a \cf estimate that has a root mean square error (RMSE) with respect to the truth of $4.38 \times 10^{-4}$, compared to $5.31 \times 10^{-4}$ for the tophat basis.
 This holds true when we average over the bin \KSF{need to do weighted average based on which r-values contribute? supposed to hear from tinker}, as in standard practice, and then compute the RMSE.
-The quadratic basis also results in lower variance across the 100 mocks, compared to the tophat basis.
-Thus, the \est allows for a more accurate and precise estimate of the \cf with fewer components.
+The spline basis also results in lower variance across the 100 mocks, compared to the tophat basis.
+Thus, \est allows for a more accurate and precise estimate of the \cf with fewer components.
 
+We note that this is fundamentally different than a kernel-based estimator.
+In a kernel formulation, each data point is smoothed by a particular kernel, smoothing out features in the resulting function.
+With our estimator, the basis functions are fixed and the data is projected onto them.
+This preserves the information in the data to the degree given by the chosen set of basis functions, which can in fact enhance features rather than smooth them.
+\KSF{please add/correct here}
 
 \subsection{BAO Scale Estimation Test}
 
 Measurement of the BAO scale provides a good use case for our estimator.
 The BAO feature is a peak in clustering on large scales, $\sim$150 Mpc, making it less sensitive to small-scale astrophysical effects.
-It is one of the best tools for constraining cosmological models, in particular the distance-redshift relation (\citealt{Kazin2010}; \citealt{Anderson2012}; \citealt{Anderson2014}; \citealt{Alam2016}).
+It is one of the best tools for constraining cosmological models, in particular the distance-redshift relation \citep{Kazin2010, Anderson2012, Anderson2014, Alam2016}.
 
 \KSF{Is there meaning to ``redshift space separation'' when I'm workin in a simulation box? Should I just say separation?}
 
@@ -370,7 +381,7 @@ To a very good approximation, the peak position depends on the single scale dila
 \begin{equation}
 \alpha = \Bigg( \frac{D_A(z)}{D_A^{mod}(z)} \Bigg)^{2/3} \Bigg( \frac{H^{mod}(z)}{H(z)} \Bigg)^{1/3} \Bigg( \frac{r_s^{mod}}{r_s} \Bigg),
 \end{equation}
-where $D_A$ is the angular diameter distance, $H$ is the Hubble constant, $r_s$ is the sound horizon scale at the drag epoch, and the superscript ``$mod$'' denotes the value for the fiducial model.
+where $D_A$ is the angular diameter distance, $H$ is the Hubble constant, $r_s$ is the sound horizon scale at the drag epoch, and the superscript ``$mod$'' denotes the value for the fiducial model. \KSF{mod or fid? fid just was v close to fit}
 If we find $\alpha>1$, the peak is shifted to smaller scales than its position in the model, and if $\alpha<1$, the peak is shifted to larger scales.
 
 % Using spherically averaged so don't need this!!
@@ -387,6 +398,7 @@ In standard practice, a fitting function is used to determine the value of $\alp
 where $B$ is a constant that allows for a large-scale bias, and $a_1$, $a_2$, and $a_3$ are nuisance parameters to account for the broadband shape.
 The model is given by \KSF{DESCRIBE}, and a $\chi^2$ fit is performed with five free parameters: $\alpha$, $B$, $a_1$, $a_2$, and $a_3$.
 The resulting value for $\alpha$ is used to derive the actual values of the distance scales of interest.
+Typically, density-field reconstruction is performed before applying the estimator to correct for nonlinear growth around the BAO scale \citep{Eisenstein2007}; for our toy example, we will omit this step.
 
 The form of the standard fitting function is well-suited to our estimator, as it is a few-parameter model with a linear combination of terms.
 To use our estimator to estimate $\alpha$, we take the numerical partial derivative of the model with respect to $\alpha$, using a change in $\alpha$ of size $d\alpha$.
@@ -404,13 +416,15 @@ With the terms in this fitting function the bases of our estimator, the values $
 
 \KSF{Instead of this alpha test, should do a slightly more realistic one where we change the model cosmology? Issue is that we then don't know the truth}
 
-\KSF{BUT my estimator is having a hard time recovering the truth anyway! Because of variance in the realizations. It converges to the same, but wrong, value of alpha, and diff ones for diff realizations. Need to average over many? (Still maybe wrong due to some persistant weirdness as mentioned above! Maybe need to check how I'm doing the lognormals)}
+\KSF{BUT my estimator is having a hard time recovering the truth anyway! Because of variance in the realizations. It converges to the same, but wrong, value of alpha, and diff ones for diff realizations. Need to average over many?}
+
+\KSF{compare to tophat fit with standard BAO fitting function??}
 
 \label{fig:bao_bases}
 \begin{figure}[ht]
 \centering
     \includegraphics[width=0.8\textwidth]{bao_bases}
-    \caption{The set of basis functions used to fit for the BAO scale using our estimator. The $B^2$ term (green) is the fiducial model used to determine the scale dilation parameter $\alpha$. The $C$ term is the derivative of this model with respect to $\alpha$, allowing for the estimation of this parameter. The $a_1$, $a_2$, and $a_3$ terms are nuisance parameters to fit the broadband shape. The \KSF{Make colorblind friendly! Do i also need to use different linestyles? Or maybe weights?}}
+    \caption{The set of basis functions used to fit for the BAO scale using our estimator. The $B^2$ term (green) is the fiducial model used to determine the scale dilation parameter $\alpha$. The $C$ term is the derivative of this model with respect to $\alpha$, allowing for the estimation of this parameter. The $a_1$, $a_2$, and $a_3$ terms are nuisance parameters to fit the broadband shape. \KSF{Make colorblind friendly! Do i also need to use different linestyles?}}
 \end{figure}
 
 We demonstrate this method using the same set of lognormal mocks as in $\S$\ref{sec:spline}.
@@ -420,7 +434,7 @@ The set of basis functions for our estimator is shown in Figure~\ref{fig:bao_bas
 We perform an iterative procedure to estimate $\alpha$.
 After the first estimation with the $\alpha=1.05$, model, we use the value of $C$ to compute the recovered $\alpha$, as described above.
 We then take that value as our $\alpha_{mod}$, and re-run the estimator.
-We stop when the percent change between $\alpha_{mod}$ and the recovered $\alpha$ is less than 0.01\%; it typically takes only $\sim$5 iterations to converge.
+We stop when the percent change between $\alpha_{mod}$ and the recovered $\alpha$ is less than 0.01\%; it typically takes only $\sim$5 iterations to converge. \KSF{update this with true values}
 The resulting estimate for the correlation function is shown in Figure~\ref{fig:bao}, in comparison to the traditional tophat estimator.
 
 \label{fig:bao}
@@ -430,6 +444,11 @@ The resulting estimate for the correlation function is shown in Figure~\ref{fig:
     \caption{Estimation of the correlation function using our estimator with basis functions based on the BAO fitting function (purple dot-dashed). We also show the standard Landy-Szalay estimator, displayed as a tophat function (blue), as well as the true input correlation function (black). \KSF{This is a placeholder figure! Need to resolve issues above.} \KSF{Should this and the basis set figure be a single figure with two panels?}}
 \end{figure}
 
+These basis functions are significantly different than the tophat or B-spline bases previously explored as they are not localized.
+This means that data at all scales could contribute to all basis functions.
+It is then critical to ensure that the final parameter estimate does not reply on the range of scales chosen.
+We have confirmed that in this application, the result is robust to the chosen range as long as the scales cover the range $40<r<200$ \hmpc, the typical range used in BAO analyses. \KSF{Actually have to check this and update numbers!}
+
 % \section{Application to survey data} \label{sec:app}
 
 % We apply the estimator to the SDSS DR3 sample from \cite{Eisenstein2005}.
@@ -438,15 +457,27 @@ The resulting estimate for the correlation function is shown in Figure~\ref{fig:
 
 \section{Discussion} \label{sec:discuss}
 
-We estimated the \cf with fewer components to achieve the same level of precision.
-
 \subsection{Beyond the Landy-Szalay Estimator}
 
-We note that our estimator doesn't rely on \LS; it could be implemented for various linear combination of pair counts, given certain properties. %aka the tensor term
-[Mention other estimators]
-
-This includes the optimized estimator of \cite{VargasMagana2013}, which also uses a linear combination approach. 
-[Describe how]
+While we have formulated our estimator as a generalization of \LS, as it is the standard used in \cf analyses and has optimal properties under certain conditions, we can also reformulate it for other estimators.
+The formulation currently requires a normalization term (i.e. denominator) of the $RR$ counts, as we replace this with our $QQ$ term.
+This is the case for the \cite{PeeblesHauser1974} estimator and the \cite{Hewett1982} estimator:
+\begin{eqnarray}
+    \xi_{PH}(r) &=& \frac{DD - RR}{RR} \\
+    \xi_{Hew}(r) &=& \frac{DD - DR}{RR}.
+\end{eqnarray}
+\KSF{dropped $k$ and $(r)$ notation here, do i need?}
+We could also generalize estimators which have a $DR$ term as the denominator, such as the \cite{DavisPeebles1983} estimator,
+\begin{equation}
+    \xi_{DP}(r) = \frac{DD - DR}{DR}
+\end{equation}
+by defining
+\begin{equation}
+    DQ = \frac{2}{N_D N_R} \sum_{n m} f(T_n, T_m) \cdot f\T(T_n, T_m).
+\end{equation}
+This could be extended to almost any linear combination of pair counts.
+The estimator of \cite{VargasMagana2013} selects the optimal combination of pair counts; our estimators could be combined to create an even more generalized estimator.
+\KSF{some of the terms in V-M include DD in the denom - need to mention this?}
 
 \KSF{Mention other work with Barnett about LS estimator?}
 
@@ -455,7 +486,7 @@ This includes the optimized estimator of \cite{VargasMagana2013}, which also use
 The computational scaling is by definition the same compared to traditional estimators due to the limiting factor of pair-finding.
 \Est has the additional need for evaluating the function $f$ for each pair of galaxies.
 For simple basis functions like splines, this will only marginally decrease performance.
-For more complicated functions such as evaluating a cosmological model, \Est may incur extra computational expense.
+For more complicated functions such as evaluating a cosmological model, \est may incur extra computational expense.
 Basis functions can also be input on a grid and then interpolated; the performance is then the same for all functions, but the interpolation for each function for each pair does somewhat decrease the performance.
 
 \KSF{Is there a need to say much more? If not, maybe doesn't deserve its own section - could this go in the implementation section? Or maybe tacked onto another small section if we have one that makes sense}
@@ -501,13 +532,37 @@ This will significantly reduce requirements on mocks, which will be particularly
 
 \subsection{Further Applications}
 
-We could also investigate: gradients, anomalies, growth of structure, directly estimating the cosmological parameters, calibrating for systematics, clustering dependence of galaxy properties.
-[Explain (some of) these in more detail]
+The formulation of \est opens up many possibilities for extracting information from the correlation function.
+The most straightforward applications are standard basis functions or linearizeable astrophysical models, as we have shown here.
+Other applications for the direct estimation of cosmological parameters could include the growth rate of cosmic structure $f$ \citep{Satpathy2016, Reid2018} and primordial non-Gaussianity in the local density field $f^{local}_{NL}$ \citep{Karagiannis2014}.
+\KSF{mention idea of doing full cosmo model analysis by taking derivs wrt cosmological params? cool but less connected to citeable papers perhaps}
 
-We also may be able to use our estimator to simultaneously estimate the correlation function and the power spectrum.
-[explain how, implications]
+We can take our estimator a step further by choosing basis functions that depend not only on the separation between tracer pairs, but also on the properties of the tracers themselves.
+One such application is the redshift dependence of the Alcock-Paczynski effect \cite{AlcockPaczynski1979}, which can be used to constrain the matter density $\Omega_m$ and the dark energy equation of state parameter $w$ \citep{Li2016}.
+The basis functions $f$ in this case would take the form
+\begin{equation}
+    f_k(T_n, T_m) = f_k(r_{nm}, z_n, z_m),
+\end{equation}
+where $z$ is the redshift of tracer $n$ or $m$.
+Another potential use case is the luminosity and color dependence of galaxy clustering, which can be used to probe galaxy formation \citep{Zehavi20}.
+This could be extended to other galaxy properties.
 
-\subsection{Summary}
+The estimator gives us the opportunity to investigate more subtle or exotic signals which are anomalous with respect to our conventional models.
+Anomalies could appear as inhomogeneities or anisotropies in the data.
+For example, cosmological parameters could vary across the sky, which has previously investigated in patches across the Cosmic Microwave Background \citep{MukherjeeWandelt2018}.
+Another possibility is anisotropy in the cosmic acceleration, which could appear in various probes including the BAO peak \citep{Faltenbacher2012} and Type Ia supernovae \citep{Colin2019}.
+With our estimator, we could introduce a dependence on location or direction into our basis functions, and constrain the potential deviation from homogeneity or isotropy.
+While these effects would be highly degenerate with systematics, our estimator combined with robust systematics mitigation allows us to investigate the possibility of new physics.
+
+Finally, our estimator can be directly related to a power spectrum analysis.
+We could use a Fourier basis as our set of continuous functions.
+This would allow us to directly project the data onto Fourier modes.
+This represents a step towards unifying the correlation function and the power spectrum. \KSF{there's more to say here but I'm not sure what}
+
+
+\section{Summary}
+
+We did cool science!
 
 \KSF{Do we want a summary? Think it might be useful for this particular paper, but def repetitive}
 
