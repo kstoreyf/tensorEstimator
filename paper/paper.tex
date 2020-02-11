@@ -3,12 +3,10 @@
 
 % to-do
 % -----
-% - get yourself an ORCID and use it.
-% - Is ``vectorized'' the right word? It's what I say, but now I'm doubting it. We could go with linear-regression. Or affine-invariant. Or unbinned. Or continuous-function?
 
 % style notes
 % -----------
-% - line break at sentence breaks? Or more frequently? So git diff works good?
+% - line break at sentence breaks
 
 %\documentclass[twocolumn]{aastex62}
 %\documentclass[12 pt]{article}
@@ -43,8 +41,8 @@
 \newcommand{\T}{^{\mathsf{T}}}
 \newcommand{\hmpc}{$h^{-1}$Mpc}
 % comments
-%\newcommand{\KSF}[1]{\textcolor{teal}{KSF says: #1}}
-\newcommand{\KSF}[1]{\textcolor{teal}{}}
+\newcommand{\KSF}[1]{\textcolor{teal}{KSF says: #1}}
+%\newcommand{\KSF}[1]{\textcolor{teal}{}}
 
 % margins
 %\addtolength{\topmargin}{-0.75in}
@@ -132,16 +130,17 @@ The LSS also contains the signature of redshift-space distortions caused by the 
 Additionally, the LSS can be used to constrain galaxy formation in conjunction with models of galaxy bias (e.g. \citealt{Hamilton1988}). %?
 With current observations, the LSS is well-described by a cold dark matter model with a cosmological constant, the standard $\Lambda$CDM model.
 Upcoming galaxy surveys will observe larger volumes with improved measurements, allowing us to test $\Lambda$CDM to even higher precision.
+\KSF{Should I name-drop surveys, and their data volume / sky area?}
 
 We characterize the LSS by using luminous sources to trace the underlying matter density field.
 These tracers are often to taken to be galaxies, but can also be galaxy clusters, quasars and other sources.
-% should i say that hereafter we will take them to be galaxies?
-The clustering of these objects is measured with two-point statistics, namely the power spectrum $P(k)$ and the two-point correlation function (\cf). %name xi_r?
+\KSF{should i say that hereafter we will take them to be galaxies?}
+The clustering of these objects is measured with two-point statistics, namely the power spectrum $P(k)$ and the two-point correlation function (\cf).
 These characterize the clustering in Fourier space and real space, respectively, with the \cf defined as the Fourier Transform of the power spectrum: 
-%TODO: CHECK, PROBS WRONG
 \begin{equation}
-\xi(r) = \frac{1}{2\pi} \int_0^{\infty} P(k) d^3k
+\xi(r) = \frac{1}{2\pi^2} \int_0^{\infty} P(k) \frac{\mathrm{sin}(kr)}{kr} k^2 dk
 \end{equation}
+where we assume isotropy. \KSF{should i give the original Fourier transform before itegrating over orientation?}
 In principle, the power spectrum and the two-point correlation function contain the same information.
 However, in practical applications the survey boundaries introduce nontrivial issues in computing these statistics, leading to diverging approaches to their computation with a significant difference in expense.
 The \cf requires more computational power and extra survey products, but it is an incredibly useful tool; for instance, it well-suited to the analysis of the BAO feature which manifests at a single scale in real space.
@@ -150,14 +149,21 @@ The \cf measures the excess probability that any two galaxies are separated by a
 % need to discuss statistical homogeneity & isotropy? (ergodicity?)
 In calculating the \cf, the boundaries of the surveys prevent us from directly summing pair counts due to nontrivial edge effects.
 To account for the survey boundaries as well as corrupted regions due to issues such as bright foreground stars, a set of random points are Poisson-distributed within the acceptable survey window. 
-The pairwise correlations of these points, which by construction are unclustered, are used to normalize out the survey window when estimating the \cf of the clustered data.
+The pairwise correlations of these unclustered points are used to normalize out the survey window when estimating the \cf of the clustered data.
 Typically, this requires random points on the order of 10-100 times the number of data points, making the random correlations the limiting factor in \cf computation.
 
 The \cf is computed in bins of radial separation, meaning that in practice it measures the volume average of the \cf over the bin. %is this accurate?
-The choice of bins requires a trade-off between bias and variance: fewer bins may bias the result, while more bins increases the variance of measurement.
-Finite-width bins also result in a loss of information about the property in which one is binning. 
-Especially as we strive for extreme precision in large-scale structure analyses, we should be maximizing the information we extract from the data.
-Moreover, we note that standard estimators are fundamentally biased due to this finite binning; we will address this in a future work. %TODO: figure out this wording. need to explain more than this or leave out entirely?
+This binning introduces inherent limitations.
+First, the choice of bins requires a trade-off between bias and variance: fewer bins may bias the result, while more bins increases the variance of measurement.
+Finite-width bins also result in a loss of information about the property in which one is binning.
+As we strive for extreme precision in large-scale structure analyses, we should be maximizing the information we extract from the data.
+
+More generally, binning adds arbitrary boundaries between continuous data; results should not depend on bin choice, yet they sometimes do.
+\cite{Lanzuisi2017} noted that the choice of binning axis impacts the detected correlation between the luminosity of active galactic nuclei and their host galaxies; \cite{Grimmett2020} devised a method to investigate this correlation in a continuous manner using a hierarchical Bayesian model, eliminating the need for binning.
+\cite{Bailoni2016} explored the dependence of clustering analyses on the number of redshift bins, finding a non-negligible difference in cosmological parameter uncertainties.
+The implications for BAO analyses were explored by \citep{Percival2014}, who found that there is an optimal bin width given the analysis method.
+This balances the increasing statistical error with small bins and the offset in the derived BAO peak location with large bins; the effects are small but non-negligible.
+%Moreover, we note that standard estimators are fundamentally biased due to this finite binning; we will address this in a future work. %TODO: figure out this wording. need to explain more than this or leave out entirely?
 
 %some papers have equations (even this eqn) in intro - but should bump it to motivation and just explain?
 Estimators of the \cf have been studied extensively (\citealt{PeeblesHauser1974}; \citealt{DavisPeebles1983}; \citealt{Hamilton1993}).
@@ -176,11 +182,11 @@ Variations on the random catalog pair count method have been proposed in recent 
 \cite{Demina2016} replaced the $DR$ and $RR$ terms with an integral over the probability map, reducing computation time and increasing precision.
 An estimator proposed by \cite{VargasMagana2013} iterates over sets of mock catalogs to find an optimal linear combination of data and random pair counts, reducing the bias and variance.
 The marked correlation function \citep{WhitePadmanabhan2009} sums weights based on properties of the galaxies one is interested in, such as the local density or galaxy luminosity, and avoids the use of a random catalog.
-The estimators described so far have all taken probabilistic approaches; some have also taken a likelihood approach.
+The estimators described so far have all taken probabilistic approaches; others have taken a likelihood approach.
 \cite{BaxterRozo2013} introduced a maximum likelihood estimator for the \cf, which achieves lower variance compared to the \LS estimator, enabling finer binning and requiring a smaller random catalog for the same precision.
 
 These estimators present improvements to \LS, but they are still limited to estimates in separation bins.
-Some require additional computational costs or layers of complexity, so the standard formulation of \LS continues to be the default estimator used in most analyses. %make sure this is true! talk to cosmologists who do these analyses
+Some require additional computational costs or layers of complexity, so the standard formulation of \LS continues to be the default estimator used in most analyses.
 
 In this paper, we present a new estimator for the correlation function, \est, which generalizes the \LS estimator to produce a continuous estimation of the \cf. 
 \Est projects the galaxy pairs onto a set of continuous basis functions and computes the best-fit linear combination of these functions.
@@ -241,11 +247,9 @@ Naively, in the case of the \cf, the observed data is the pair counts at a given
 Indeed, this is reminiscent of the so-called natural estimator of the \cf, $\xi_k = DD_k/RR_k - 1$ (e.g. \citealt{Kerscher2000}).
 
 From this connection, we can infer the form of the estimator.
+\KSF{expand this section}
 
 % TODO: fix this capitalization issue
-%\section{\Est} 
-%\label{sec:est}
-
 \subsection{\Est}
 \label{sec:est}
 
@@ -328,7 +332,8 @@ We also generate a uniformly sampled random catalog with 10 times the number of 
 \begin{figure}[ht]
 \centering
     \includegraphics[width=0.8\textwidth]{tophat_cubic}
-    \caption{A comparison between \est with a cubic spline basis function (red dotted) and the standard tophat estimator (blue solid). The shaded region is the 1$\sigma$ variation in the 100 mock catalogs. The cubic spline estimator has lower bias and lower variance with fewer bins. \KSF{move rmse from figure into text only? but then not necessarily clear its less biased} \KSF{does tophat need to be a different linestyle?}}
+    \caption{A comparison between \est with a cubic spline basis function (red dotted) and the standard tophat estimator (blue solid). The shaded region is the 1$\sigma$ variation in the 100 mock catalogs. The cubic spline estimator has lower bias and lower variance with fewer bins. \KSF{quote rmse in caption? otherwise not clear from figure its less biased.} \KSF{does tophat need to be a different linestyle?}} \KSF{fix to dotted linestyle}
+
 \end{figure}
 
 \KSF{Should i have a figure showing the basis functions?}
@@ -336,8 +341,6 @@ We also generate a uniformly sampled random catalog with 10 times the number of 
 \KSF{These sims have the weird thing where the data says the peak is offset. Should figure out, and also it's distracting from the main point of the figure}
 
 \KSF{FINAL PARAMS:  number density 3e-4 (now 1e-4). rmax 200 hMpc (now 150). rcont=1000 (now rcont=300). L=1000 hMpc (now 750 - need more to account for higher rmax)}
-
-\KSF{should RMSE be shown in figure as well as described in text?}
 
 A natural extension of tophat basis functions is the B-spline.
 B-splines of order $n$ are piecewise polynomials of order $n-1$; they constitute the basis functions for spline interpolation \KSF{CITE}.
@@ -416,8 +419,6 @@ With the terms in this fitting function the bases of our estimator, the values $
 
 \KSF{Instead of this alpha test, should do a slightly more realistic one where we change the model cosmology? Issue is that we then don't know the truth}
 
-\KSF{BUT my estimator is having a hard time recovering the truth anyway! Because of variance in the realizations. It converges to the same, but wrong, value of alpha, and diff ones for diff realizations. Need to average over many?}
-
 \KSF{compare to tophat fit with standard BAO fitting function??}
 
 \label{fig:bao_bases}
@@ -428,25 +429,28 @@ With the terms in this fitting function the bases of our estimator, the values $
 \end{figure}
 
 We demonstrate this method using the same set of lognormal mocks as in $\S$\ref{sec:spline}.
-We construct a simple test in which our model is the known input model, the Planck parameters, but with some scale dilation offset, here $\alpha_{mod}=1.05$ (while the true value is, of course, $\alpha=1$).
+We construct a simple test in which our model is the known input model, the Planck parameters, but with some scale dilation offset, here $\alpha_{mod}=0.98$ (while the true value is, of course, $\alpha=1$).
 The set of basis functions for our estimator is shown in Figure~\ref{fig:bao_bases}.
 
 We perform an iterative procedure to estimate $\alpha$.
-After the first estimation with the $\alpha=1.05$, model, we use the value of $C$ to compute the recovered $\alpha$, as described above.
+After the first estimation with the $\alpha=0.98$, model, we use the value of $C$ to compute the recovered $\alpha$, as described above.
 We then take that value as our $\alpha_{mod}$, and re-run the estimator.
 We stop when the percent change between $\alpha_{mod}$ and the recovered $\alpha$ is less than 0.01\%; it typically takes only $\sim$5 iterations to converge. \KSF{update this with true values}
-The resulting estimate for the correlation function is shown in Figure~\ref{fig:bao}, in comparison to the traditional tophat estimator.
+We apply this procedure to each of the 100 mocks; the resulting estimate for the correlation function is shown in Figure~\ref{fig:bao}.
+The mean BAO estimate is shown in orange, and the mean tophat estimate is in blue; the truth is in black.
+Our estimator clearly better represents the shape of the known \cf.
+The mean value of the final recovered scale dilation parameter is $\alpha=0.9995$ \KSF{What do i quote for the error here?}, very close \KSF{quote percent?} to the true value of $1$.
 
 \label{fig:bao}
 \begin{figure}[th]
 \centering
     \includegraphics[width=0.8\textwidth]{bao}
-    \caption{Estimation of the correlation function using our estimator with basis functions based on the BAO fitting function (purple dot-dashed). We also show the standard Landy-Szalay estimator, displayed as a tophat function (blue), as well as the true input correlation function (black). \KSF{This is a placeholder figure! Need to resolve issues above.} \KSF{Should this and the basis set figure be a single figure with two panels?}}
+    \caption{Estimation of the correlation function using our estimator with basis functions based on the BAO fitting function (orange dot-dashed). The line is the mean of the final estimate from the iteration procedure for 100 mocks, and the shaded region is the $1\sigma$ variation. We also show the standard Landy-Szalay estimator, displayed as a tophat function (blue), as well as the true input correlation function (black). \KSF{This is for the 1e-4 box, need to run bigger box.} \KSF{Should this and the basis set figure be a single figure with two panels?} \KSF{Should i have a figure showing the sum of the basis functions and how that gets you the final cf?}}
 \end{figure}
 
-These basis functions are significantly different than the tophat or B-spline bases previously explored as they are not localized.
+We note that these basis functions are significantly different than the tophat or B-spline bases previously explored, mainly because they are not localized.
 This means that data at all scales could contribute to all basis functions.
-It is then critical to ensure that the final parameter estimate does not reply on the range of scales chosen.
+It is then critical to ensure that the final parameter estimate does not rely on the range of scales chosen.
 We have confirmed that in this application, the result is robust to the chosen range as long as the scales cover the range $40<r<200$ \hmpc, the typical range used in BAO analyses. \KSF{Actually have to check this and update numbers!}
 
 % \section{Application to survey data} \label{sec:app}
@@ -544,7 +548,7 @@ The basis functions $f$ in this case would take the form
     f_k(T_n, T_m) = f_k(r_{nm}, z_n, z_m),
 \end{equation}
 where $z$ is the redshift of tracer $n$ or $m$.
-Another potential use case is the luminosity and color dependence of galaxy clustering, which can be used to probe galaxy formation \citep{Zehavi20}.
+Another potential use case is the luminosity and color dependence of galaxy clustering, which can be used to probe galaxy formation \citep{Zehavi2011}.
 This could be extended to other galaxy properties.
 
 The estimator gives us the opportunity to investigate more subtle or exotic signals which are anomalous with respect to our conventional models.
