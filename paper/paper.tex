@@ -264,7 +264,7 @@ We generalize the \LS estimator defined above to any set of $K$ basis functions 
 DD &\equiv& \frac{2}{N_D(N_D-1)} \sum_{n n'} f(T_n, T_{n'}) \\
 DR &\equiv& \frac{1}{N_D N_R} \sum_{n m} f(T_n, T_{m}) \\
 RR &\equiv& \frac{2}{N_R(N_R-1)} \sum_{m m'} f(T_m, T_{m'}) \\
-QQ &\equiv& \frac{2}{N_R(N_R-1)} \sum_{m m'} f(T_m, T_{m'}) \cdot f\T(T_m, T_{m'}),
+QQ &\equiv& \frac{2}{N_R(N_R-1)} \sum_{m m'} f(T_m, T_{m'}) \cdot f\T(T_m, T_{m'}), \label{eq:qq_proj}
 \end{eqnarray}
 %introduced this T notation to be the most general but it's a bit clunky (see below)
 %what do we think about K-vector notation?
@@ -275,7 +275,7 @@ Then, we can compute the \cf as
 \begin{eqnarray}\displaystyle
 % here is where the T notation is weird - when you look at evaluation
 a &\equiv& QQ\inv \cdot (DD + 2DR - RR) \\
-\xi(T_l, T_{l'}) &\equiv& a\T \cdot f(T_l, T_{l'})
+\xi(T_l, T_{l'}) &\equiv& a\T \cdot f(T_l, T_{l'}) \label{eq:xi_proj}
 \end{eqnarray}
 where $T_l$ and $T_{l'}$ contain the data values at which to evaluate $\xi$, and $a$ is a $K$-vector of the ``amplitudes'' of the basis functions.
 This generalized two-point estimator, or \est, removes the need for binning as the basis functions can be continuous.
@@ -621,6 +621,46 @@ We note that this requires $M$ be invertible.
 However, any two equivalent bases must be related by the inverse of a transformation matrix, so this requirement is already satisfied.
 
 
+\section{Computing RR and QQ Analytically}\label{sec:analytic}
+
+The autocorrelation of the random catalog is meant to approximate the window function. 
+When we have a periodic cube, we can compute this $RR$ term analytically.
+Here we derive this, and then derive the equivalent for our continuous-basis $RR$ and $QQ$ terms.
+
+We consider an annulus around a single galaxy. 
+This annulus has a volume $V_{ann}$.
+Taking the box to have average number density $\bar{n}$, the number of galaxies expected in the annulus is $N_{ann} = A \bar{n}$, and thus this galaxy is part of $N_{ann}$ pairs.   
+We do this for each of the $N_D-1$ other galaxies, and find a total of $(N_D-1) N_{annulus} = \frac{1}{2} (N_D-1) V_{ann} \bar{n}$ pairs, where the factor of $\frac{1}{2}$ accounts for the fact that this double-counts pairs.
+For a cube, $\bar{n} = \frac{N_D}{L^3}$, so we finally count $\frac{1}{2} \frac{N_D}{L^3} (N-1) V_{ann}$ pairs.
+
+For hard-edged radial bins, we can compute $A$ simply as the difference between spherical volumes. 
+We can also represent this as an integral:
+\begin{equation} \label{eq:vol_tophat}
+V_{ann} = \int_{b_1}^{b_2} dV = 4\pi \int_{b_1}^{b_2} r^2 dr
+\end{equation} 
+We can generalize this to any basis function $f(r)$ that is a function of $r$:
+\begin{equation}
+V_{ann} = 4\pi  \int_{b_1}^{b_2} f^2(r) r^2 dr
+\end{equation}
+which we can see reduces to Equation \ref{eq:vol_tophat} when $f(r)$ is the tophat function (returning 1 or 0 depending on whether $r$ is between $b_1$ and $b_2$).
+
+This gives us our full generalized analytic $RR$ term, which has elements
+\begin{equation}
+RR_{i,\text{ana}} = \frac{1}{2} \frac{N_D}{L^3} (N_D-1)  4\pi  \int_{0}^{r_\mathrm{max}} f_i^2(r) r^2 dr
+\end{equation}
+where $i$ is the index of the basis function vector.
+Based on the definition of $QQ$ in Equation \ref{eq:qq_proj} as the outer product of the basis function vector and its transpose, we can see that the elements analytic $QQ$ term are:
+\begin{equation}
+QQ_{ij,\text{ana}} = \frac{1}{2} \frac{N_D}{L^3} (N_D-1)  4\pi  \int_{0}^{r_\mathrm{max}} f_i(r) f_j(r) r^2 dr
+\end{equation}
+This could be further generalized to account for basis functions that take other properties as input.
+
+When considering a periodic box, the naive estimator is no longer biased, so we can also avoid computing the $DR$ term and calculate the amplitudes as 
+\begin{equation}
+a_{\mathrm{ana}} = QQ_\mathrm{ana} \inv \cdot DD.
+\end{equation}
+Looking back, it might have seemed strange that we use $N_D$ in calculating the analytical $RR$ term, but we now see that this normalization prefactor cancels out with that of the $DD$ term.
+Finally, we can compute the correlation function as before in Equation \ref{eq:xi_proj}.
 
 %need style file error
 %\bibliographystyle{apj} 
@@ -629,3 +669,17 @@ However, any two equivalent bases must be related by the inverse of a transforma
 \bibliography{LSS-est_paper}
 
 \end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
