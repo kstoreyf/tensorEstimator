@@ -138,10 +138,14 @@ These tracers are often to taken to be galaxies, but can also be galaxy clusters
 \KSF{should i say that hereafter we will take them to be galaxies?} \hogg{Yes.}
 The clustering of these objects is measured with two-point statistics, namely the power spectrum $P(k)$ and the two-point correlation function (\cf).
 These characterize the clustering in Fourier space and real space, respectively, with the \cf defined as the Fourier Transform of the power spectrum: 
+\KSF{i'm not sure about my notation here with the vectors and d3k}
 \begin{equation}
-\xi(r) = \frac{1}{2\pi^2} \int_0^{\infty} P(k) \frac{\mathrm{sin}(kr)}{kr} k^2 dk
+\xi(\mathbf{r}) = \frac{1}{(2\pi)^3} \int P(\mathbf{k}) e^{i\mathbf{k} \cdot \mathbf{r}} d^3\mathbf{k}.
 \end{equation}
-where we assume isotropy. \KSF{should i give the original Fourier transform before itegrating over orientation?} \hogg{Yes, and say that the second follows from the first.}
+If we assume isotropy, we find that the spherically averaged correlation function is
+\begin{equation}
+\xi(r) = \frac{1}{2\pi^2} \int_0^{\infty} P(k) \frac{\mathrm{sin}(kr)}{kr} k^2 dk.
+\end{equation}
 In principle, the power spectrum and the two-point correlation function contain the same information.
 However, in practical applications the survey boundaries introduce nontrivial issues in computing these statistics, leading to diverging approaches to their computation with a significant difference in expense.
 The \cf requires more computational power and extra survey products, but it is an incredibly useful tool; for instance, it well-suited to the analysis of the BAO feature which manifests at a single scale in real space.
@@ -615,6 +619,8 @@ Thus after an affine transformation of the basis function, the resulting estimat
 We note that this requires $M$ be invertible.
 % not sure if i understand what i wrote here
 However, any two equivalent bases must be related by the inverse of a transformation matrix, so this requirement is already satisfied.
+
+
 
 %need style file error
 %\bibliographystyle{apj} 
